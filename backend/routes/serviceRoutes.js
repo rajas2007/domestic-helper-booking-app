@@ -1,9 +1,15 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
-const { addService, fetchServices } = require('../controllers/serviceController');
+const {
+  addService,
+  fetchServices,
+  getWorkerServices,
+} = require("../controllers/serviceController");
 
-router.post('/add', addService);
-router.get('/all', fetchServices);
+// routes
+router.post("/", addService);
+router.get("/", fetchServices);
+router.get("/worker/:id", getWorkerServices); 
 
 module.exports = router;

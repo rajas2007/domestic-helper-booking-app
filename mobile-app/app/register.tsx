@@ -7,22 +7,41 @@ import { LinearGradient } from "expo-linear-gradient";
 export default function Register() {
   const router = useRouter();
 
-  const [role, setRole] = useState("customer");
+  const [role, setRole] = useState("user");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
+    if (loading) return;
+
+    // ✅ VALIDATION
+    if (!name || !email || !password) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const res = await axios.post(
+      await axios.post(
         "http://192.168.31.199:5000/api/auth/register",
-        { name, email, password, role }
+        {
+          name: name.trim(),
+          email: email.trim(),
+          password,
+          role,
+        }
       );
 
       alert("Registered successfully");
       router.push("/login");
+
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Error");
+      alert(err?.response?.data?.message || "Registration failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,11 +104,11 @@ export default function Register() {
           <TouchableOpacity
             style={[
               styles.toggleButton,
-              role === "customer" && styles.activeToggle,
+              role === "user" && styles.activeToggle,
             ]}
-            onPress={() => setRole("customer")}
+            onPress={() => setRole("user")}
           >
-            <Text style={styles.toggleText}>Customer</Text>
+            <Text style={styles.toggleText}>User</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -105,12 +124,18 @@ export default function Register() {
       </View>
 
       {/* BUTTON */}
-      <TouchableOpacity onPress={handleRegister} style={{ marginTop: 30 }}>
+      <TouchableOpacity
+        onPress={handleRegister}
+        style={{ marginTop: 30 }}
+        disabled={loading}
+      >
         <LinearGradient
           colors={["#3b82f6", "#6366f1"]}
           style={styles.button}
         >
-          <Text style={styles.buttonText}>Register</Text>
+          <Text style={styles.buttonText}>
+            {loading ? "Registering..." : "Register"}
+          </Text>
         </LinearGradient>
       </TouchableOpacity>
 

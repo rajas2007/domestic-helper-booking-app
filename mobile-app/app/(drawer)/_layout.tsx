@@ -1,9 +1,7 @@
 import { Drawer } from "expo-router/drawer";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, usePathname } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-import { usePathname } from "expo-router";
 import { useEffect, useState } from "react";
 
 function CustomDrawerContent() {
@@ -15,7 +13,11 @@ function CustomDrawerContent() {
   useEffect(() => {
     const loadUser = async () => {
       const stored = await AsyncStorage.getItem("user");
-      if (stored) setUser(JSON.parse(stored));
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        console.log("USER:", parsed);
+        setUser(parsed);
+      }
     };
     loadUser();
   }, []);
@@ -34,7 +36,7 @@ function CustomDrawerContent() {
       <View style={styles.header}>
         <Text style={styles.appName}>Helperly</Text>
         <Text style={styles.role}>
-          {user?.name || "User"} ({user?.role || "customer"})
+          {user?.name || "User"} ({user?.role || "user"})
         </Text>
       </View>
 
@@ -58,19 +60,28 @@ function CustomDrawerContent() {
             My Bookings
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity onPress={() => router.push("/(drawer)/settings")}>
-            <Text style={isActive("settings") ? styles.activeItem : styles.item}>
+          <Text style={isActive("settings") ? styles.activeItem : styles.item}>
             Settings
-            </Text>
+          </Text>
         </TouchableOpacity>
 
-        {/* SHOW ONLY FOR WORKER */}
+        {/* 🔥 WORKER ONLY */}
         {user?.role === "worker" && (
-          <TouchableOpacity onPress={() => router.push("/(drawer)/worker")}>
-            <Text style={isActive("worker") ? styles.activeItem : styles.item}>
-              Worker Panel
-            </Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity onPress={() => router.push("/(drawer)/worker")}>
+              <Text style={isActive("worker") ? styles.activeItem : styles.item}>
+                Worker Panel
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push("/(drawer)/my-services")}>
+              <Text style={isActive("my-services") ? styles.activeItem : styles.item}>
+                My Services
+              </Text>
+            </TouchableOpacity>
+          </>
         )}
       </View>
 
@@ -92,6 +103,7 @@ export default function Layout() {
       <Drawer.Screen name="bookings" />
       <Drawer.Screen name="profile" />
       <Drawer.Screen name="worker" />
+      <Drawer.Screen name="my-services" /> {/* ✅ ADDED */}
       <Drawer.Screen name="settings" />
     </Drawer>
   );

@@ -77,21 +77,42 @@ const login = async (req, res) => {
 // ================= UPDATE USER =================
 const updateUser = async (req, res) => {
   try {
-    const { id, name, email } = req.body;
+    const { id, name, email, password } = req.body;
 
-    console.log("Updating user:", id);
+    let query;
+    let values;
 
-    const result = await db.query(
-      "UPDATE users SET name=$1, email=$2 WHERE id=$3 RETURNING *",
-      [name, email, id]
-    );
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      query = `
+        UPDATE users 
+        SET name=$1, email=$2, password=$3 
+        WHERE id=$4 
+        RETURNING *
+      `;
+
+      values = [name, email, hashedPassword, id];
+    } else {
+      query = `
+        UPDATE users 
+        SET name=$1, email=$2 
+        WHERE id=$3 
+        RETURNING *
+      `;
+
+      values = [name, email, id];
+    }
+
+    const result = await db.query(query, values);
 
     res.json(result.rows[0]);
+
   } catch (err) {
     console.error("UPDATE ERROR:", err);
     res.status(500).json({
       message: "Update failed",
-      error: err.message,
+      error: err.message
     });
   }
 };

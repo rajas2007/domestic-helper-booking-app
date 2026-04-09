@@ -12,6 +12,7 @@ export default function Settings() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -26,10 +27,16 @@ export default function Settings() {
   }, []);
 
   const handleSave = async () => {
+    if (loading) return;
+
+    setLoading(true);
+
     try {
       const userData = await AsyncStorage.getItem("user");
+
       if (!userData) {
         alert("User not found");
+        setLoading(false); // ✅ FIX
         return;
       }
 
@@ -39,19 +46,24 @@ export default function Settings() {
         "http://192.168.31.199:5000/api/auth/update",
         {
           id: user.id,
-          name,
-          email,
+          name: name.trim(),
+          email: email.trim(),
+          password: password || undefined,
         }
       );
 
-      // ✅ Update local storage with new data
+      // ✅ Update local storage
       await AsyncStorage.setItem("user", JSON.stringify(res.data));
+
+      setPassword(""); // ✅ clear password field
 
       alert("Profile updated successfully");
 
     } catch (err: any) {
       console.log("Update error:", err?.response?.data || err.message);
       alert("Update failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -101,12 +113,18 @@ export default function Settings() {
         </View>
 
         {/* BUTTON */}
-        <TouchableOpacity style={{ marginTop: 20 }} onPress={handleSave}>
+        <TouchableOpacity
+          style={{ marginTop: 20 }}
+          onPress={handleSave}
+          disabled={loading} // ✅ prevents spam
+        >
           <LinearGradient
             colors={["#3b82f6", "#6366f1"]}
             style={styles.button}
           >
-            <Text style={styles.buttonText}>Save Changes</Text>
+            <Text style={styles.buttonText}>
+              {loading ? "Saving..." : "Save Changes"}
+            </Text>
           </LinearGradient>
         </TouchableOpacity>
       </LinearGradient>

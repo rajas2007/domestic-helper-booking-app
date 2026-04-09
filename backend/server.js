@@ -20,6 +20,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use("/api/services", serviceRoutes);
 // Test Route
 app.get('/', async (req, res) => {
   try {

@@ -12,7 +12,7 @@ export default function HomeScreen() {
 
   const fetchServices = async () => {
     try {
-      const res = await axios.get("http://192.168.31.199:5000/api/services/all");
+      const res = await axios.get("http://192.168.31.199:5000/api/services");
       setServices(res.data);
     } catch (err) {
       console.log(err);

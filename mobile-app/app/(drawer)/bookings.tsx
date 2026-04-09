@@ -7,24 +7,25 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 
 export default function Bookings() {
-    const navigation: any = useNavigation();
+  const navigation: any = useNavigation();
   const [bookings, setBookings] = useState([]);
 
   const fetchBookings = async () => {
     try {
       const userData = await AsyncStorage.getItem("user");
+      if (!userData) return;
 
-        if (!userData) return;
+      const parsedUser = JSON.parse(userData);
 
-        const parsedUser = JSON.parse(userData);
-
-        const res = await axios.get(
+      const res = await axios.get(
         `http://192.168.31.199:5000/api/bookings/user/${parsedUser.id}`
-        );
+      );
 
+      console.log("USER BOOKINGS:", res.data); // 🔥 debug
       setBookings(res.data);
+
     } catch (err) {
-      console.log(err);
+      console.log("BOOKING FETCH ERROR:", err);
     }
   };
 
@@ -32,69 +33,70 @@ export default function Bookings() {
     fetchBookings();
   }, []);
 
+  // 🔥 REFRESH WHEN SCREEN FOCUSES
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", fetchBookings);
+    return unsubscribe;
+  }, [navigation]);
+
   const getStatusColor = (status: string) => {
     if (status === "accepted") return "#22c55e";
     if (status === "rejected") return "#ef4444";
-    return "#eab308";
+    return "#eab308"; // pending
   };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-    <LinearGradient
-      colors={["#020617", "#020617", "#0f172a"]}
-      style={{ flex: 1, padding: 20 }}
-    >
-
-
+      <LinearGradient
+        colors={["#020617", "#020617", "#0f172a"]}
+        style={{ flex: 1, padding: 20 }}
+      >
+        {/* HEADER */}
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+          <TouchableOpacity onPress={() => navigation.openDrawer()}>
+            <Text style={{ fontSize: 26, color: "#fff", marginRight: 10 }}>☰</Text>
+          </TouchableOpacity>
 
-  {/* HAMBURGER BUTTON */}
-  <TouchableOpacity onPress={() => navigation.openDrawer()}>
-    <Text style={{ fontSize: 26, color: "#fff", marginRight: 10 }}>☰</Text>
-  </TouchableOpacity>
+          <Text style={{ fontSize: 28, color: "#fff", fontWeight: "700" }}>
+            My Bookings
+          </Text>
+        </View>
 
-  {/* TITLE */}
-  <Text style={{ fontSize: 28, color: "#fff", fontWeight: "700" }}>
-    My Bookings
-  </Text>
-
-</View>
-
-      <FlatList
-        data={bookings}
-        keyExtractor={(item: any) => item.id.toString()}
-        renderItem={({ item }: any) => (
-          <View style={styles.card}>
-            <Text style={styles.service}>
-              {item.service_title || "Service"}
+        {/* LIST */}
+        <FlatList
+          data={bookings}
+          keyExtractor={(item: any) => item.id.toString()}
+          ListEmptyComponent={
+            <Text style={{ color: "#94a3b8", textAlign: "center", marginTop: 50 }}>
+              No bookings yet
             </Text>
+          }
+          renderItem={({ item }: any) => (
+            <View style={styles.card}>
+              {/* 🔥 FIXED FIELD NAME */}
+              <Text style={styles.service}>
+                {item.title || "Service"}
+              </Text>
 
-            <Text style={styles.price}>₹ {item.price || "---"}</Text>
+              <Text style={styles.price}>₹ {item.price || "---"}</Text>
 
-            <Text
-              style={[
-                styles.status,
-                { color: getStatusColor(item.status) },
-              ]}
-            >
-              {item.status.toUpperCase()}
-            </Text>
-          </View>
-        )}
-      />
-    </LinearGradient>
+              <Text
+                style={[
+                  styles.status,
+                  { color: getStatusColor(item.status) },
+                ]}
+              >
+                {item.status?.toUpperCase()}
+              </Text>
+            </View>
+          )}
+        />
+      </LinearGradient>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 28,
-    color: "#fff",
-    fontWeight: "700",
-    marginBottom: 20,
-  },
-
   card: {
     backgroundColor: "rgba(255,255,255,0.05)",
     padding: 16,
