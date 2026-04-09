@@ -1,14 +1,17 @@
 const express = require('express');
 const router = express.Router();
 
-const authController = require('../controllers/authController');
+// ✅ IMPORT FUNCTIONS CORRECTLY
+const { register, login, updateUser } = require('../controllers/authController');
 
-// DEBUG (you can keep or remove later)
-console.log("Register function:", authController.register);
-console.log("Login function:", authController.login);
+// DEBUG (optional)
+console.log("Register function:", register);
+console.log("Login function:", login);
+console.log("Update function:", updateUser);
 
-// REAL ROUTES
-router.post('/register', authController.register);
-router.post('/login', authController.login);
+// ROUTES
+router.post('/register', register);
+router.post('/login', login);
+router.put('/update', updateUser);
 
 module.exports = router;

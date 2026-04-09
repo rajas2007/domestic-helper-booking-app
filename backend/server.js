@@ -1,3 +1,5 @@
+const bookingRoutes = require('./routes/bookingRoutes');
+const serviceRoutes = require('./routes/serviceRoutes');
 const pool = require('./config/db');
 const express = require('express');
 const dotenv = require('dotenv');
@@ -16,7 +18,8 @@ app.use(express.json());
 
 // ✅ add routes here (AFTER middleware)
 app.use('/api/auth', authRoutes);
-
+app.use('/api/services', serviceRoutes);
+app.use('/api/bookings', bookingRoutes);
 // Test Route
 app.get('/', async (req, res) => {
   try {

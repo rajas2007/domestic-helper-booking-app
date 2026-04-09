@@ -1,81 +1,187 @@
-import { View, TextInput, Button } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import axios from "axios";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function Register() {
+  const router = useRouter();
+
+  const [role, setRole] = useState("customer");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (loading) return;
-
-    console.log("Register Clicked");
-    setLoading(true);
-
     try {
-      console.log("Sending request...");
+      const res = await axios.post(
+        "http://192.168.31.199:5000/api/auth/register",
+        { name, email, password, role }
+      );
 
-      const res = await axios.post("http://192.168.31.199:5000/api/auth/register", {
-        name,
-        email,
-        password,
-      });
-
-      console.log("Response received:", res.data);
-
-      alert("User Registered Successfully");
-
+      alert("Registered successfully");
+      router.push("/login");
     } catch (err: any) {
-      console.log("Error happened:");
-      console.log(err?.response?.data || err?.message);
-
-      alert(err?.response?.data?.message || "Something went wrong");
-
-    } finally {
-      setLoading(false);
+      alert(err?.response?.data?.message || "Error");
     }
   };
 
   return (
-    <View style={{ padding: 20 }}>
-      <TextInput
-        placeholder="Name"
-        value={name}
-        onChangeText={(text) => {
-          setName(text);
-          console.log("Name:", text);
-        }}
-        style={{ borderWidth: 1, marginBottom: 10, padding: 10 }}
-      />
+    <LinearGradient
+      colors={["#020617", "#020617", "#0f172a"]}
+      style={{ flex: 1, padding: 20 }}
+    >
+      {/* BACK */}
+      <Text
+        style={{ color: "#94a3b8", marginTop: 40 }}
+        onPress={() => router.back()}
+      >
+        ← Back
+      </Text>
 
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={(text) => {
-          setEmail(text);
-          console.log("Email:", text);
-        }}
-        style={{ borderWidth: 1, marginBottom: 10, padding: 10 }}
-      />
+      {/* HEADER */}
+      <View style={{ marginTop: 30 }}>
+        <Text style={{ fontSize: 34, color: "#fff", fontWeight: "700" }}>
+          Helperly
+        </Text>
+        <Text style={{ color: "#94a3b8", marginTop: 5 }}>
+          Create your account
+        </Text>
+      </View>
 
-      <TextInput
-        placeholder="Password"
-        value={password}
-        secureTextEntry
-        onChangeText={(text) => {
-          setPassword(text);
-          console.log("Password:", text);
-        }}
-        style={{ borderWidth: 1, marginBottom: 10, padding: 10 }}
-      />
+      {/* FORM */}
+      <View style={{ marginTop: 30 }}>
+        <Text style={styles.label}>Full Name</Text>
+        <TextInput
+          placeholder="Enter your full name"
+          placeholderTextColor="#64748b"
+          value={name}
+          onChangeText={setName}
+          style={styles.input}
+        />
 
-      <Button
-        title={loading ? "Registering..." : "Register"}
-        onPress={handleRegister}
-        disabled={loading}
-      />
-    </View>
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          placeholder="Enter your email"
+          placeholderTextColor="#64748b"
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+        />
+
+        <Text style={styles.label}>Password</Text>
+        <TextInput
+          placeholder="Create a password"
+          placeholderTextColor="#64748b"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          style={styles.input}
+        />
+
+        {/* ROLE TOGGLE */}
+        <Text style={styles.label}>Select Role</Text>
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              role === "customer" && styles.activeToggle,
+            ]}
+            onPress={() => setRole("customer")}
+          >
+            <Text style={styles.toggleText}>Customer</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              role === "worker" && styles.activeToggle,
+            ]}
+            onPress={() => setRole("worker")}
+          >
+            <Text style={styles.toggleText}>Worker</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* BUTTON */}
+      <TouchableOpacity onPress={handleRegister} style={{ marginTop: 30 }}>
+        <LinearGradient
+          colors={["#3b82f6", "#6366f1"]}
+          style={styles.button}
+        >
+          <Text style={styles.buttonText}>Register</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+
+      {/* FOOTER */}
+      <Text style={styles.footer}>
+        Already have an account?{" "}
+        <Text
+          style={{ color: "#3b82f6" }}
+          onPress={() => router.push("/login")}
+        >
+          Login
+        </Text>
+      </Text>
+    </LinearGradient>
   );
 }
+
+const styles = StyleSheet.create({
+  input: {
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 14,
+    padding: 16,
+    color: "#fff",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+
+  button: {
+    padding: 16,
+    borderRadius: 14,
+    alignItems: "center",
+  },
+
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  footer: {
+    textAlign: "center",
+    color: "#94a3b8",
+    marginTop: 20,
+  },
+
+  label: {
+    color: "#cbd5f5",
+    marginTop: 15,
+    marginBottom: 6,
+  },
+
+  toggleContainer: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 14,
+    padding: 4,
+    marginTop: 10,
+  },
+
+  toggleButton: {
+    flex: 1,
+    padding: 12,
+    alignItems: "center",
+    borderRadius: 10,
+  },
+
+  activeToggle: {
+    backgroundColor: "#3b82f6",
+  },
+
+  toggleText: {
+    color: "#fff",
+  },
+});
