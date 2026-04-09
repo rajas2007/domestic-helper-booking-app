@@ -9,6 +9,7 @@ import { LinearGradient } from "expo-linear-gradient";
 export default function HomeScreen() {
   const navigation: any = useNavigation();
   const [services, setServices] = useState([]);
+  const [bookedServices, setBookedServices] = useState<number[]>([]);
 
   const fetchServices = async () => {
     try {
@@ -19,20 +20,40 @@ export default function HomeScreen() {
     }
   };
 
+  const fetchUserBookings = async () => {
+    try {
+      const userData = await AsyncStorage.getItem("user");
+      if (!userData) return;
+
+      const user = JSON.parse(userData);
+
+      const res = await axios.get(
+        `http://192.168.31.199:5000/api/bookings/user/${user.id}`
+      );
+
+      const bookedIds = res.data.map((b: any) => b.service_id);
+      setBookedServices(bookedIds);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   useEffect(() => {
     fetchServices();
+    fetchUserBookings();
   }, []);
 
   const handleBooking = async (serviceId: number) => {
     try {
       const userData = await AsyncStorage.getItem("user");
-const user = JSON.parse(userData || "{}");
+      const user = JSON.parse(userData || "{}");
 
-await axios.post("http://192.168.31.199:5000/api/bookings/book", {
-  service_id: serviceId,
-  user_id: user.id,
-});
+      await axios.post("http://192.168.31.199:5000/api/bookings/book", {
+        service_id: serviceId,
+        user_id: user.id,
+      });
 
+      setBookedServices((prev) => [...prev, serviceId]);
       alert("Booked successfully");
     } catch (err) {
       alert("Booking failed");
@@ -41,94 +62,129 @@ await axios.post("http://192.168.31.199:5000/api/bookings/book", {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-    <LinearGradient
-      colors={["#020617", "#020617", "#0f172a"]}
-      style={{ flex: 1, padding: 20 }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
-
-        {/* HAMBURGER BUTTON */}
+      <LinearGradient
+        colors={["#020617", "#020617", "#0f172a"]}
+        style={{ flex: 1, padding: 20 }}
+      >
+        {/* HEADER */}
+        <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.openDrawer()}>
-            <Text style={{ fontSize: 26, color: "#fff", marginRight: 10 }}>☰</Text>
+            <Text style={styles.menu}>☰</Text>
           </TouchableOpacity>
 
-        {/* TITLE */}
-        <Text style={{ fontSize: 28, color: "#fff", fontWeight: "700" }}>
-        Explore
-        </Text>
+          <Text style={styles.title}>Explore</Text>
+        </View>
 
-      </View>
-      {/* SERVICES LIST */}
-      <FlatList
-        data={services}
-        keyExtractor={(item: any) => item.id.toString()}
-        renderItem={({ item }: any) => (
-          <View style={styles.card}>
-            <Text style={styles.serviceTitle}>{item.title}</Text>
-            <Text style={styles.description}>{item.description}</Text>
+        {/* LIST */}
+        <FlatList
+          data={services}
+          keyExtractor={(item: any) => item.id.toString()}
+          renderItem={({ item }: any) => {
+            const isBooked = bookedServices.includes(item.id);
 
-            <View style={styles.bottomRow}>
-              <Text style={styles.price}>₹ {item.price}</Text>
+            return (
+              <View style={styles.card}>
+                {/* TITLE */}
+                <Text style={styles.serviceTitle}>{item.title}</Text>
 
-              <TouchableOpacity
-                style={styles.bookButton}
-                onPress={() => handleBooking(item.id)}
-              >
-                <Text style={{ color: "#fff" }}>Book</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      />
-    </LinearGradient>
+                {/* DESCRIPTION */}
+                <Text style={styles.description}>{item.description}</Text>
+
+                {/* FOOTER */}
+                <View style={styles.bottomRow}>
+                  <Text style={styles.price}>₹ {item.price}</Text>
+
+                  {isBooked ? (
+                    <View style={styles.bookedButton}>
+                      <Text style={styles.buttonText}>Booked ✓</Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.bookButton}
+                      onPress={() => handleBooking(item.id)}
+                    >
+                      <Text style={styles.buttonText}>Book</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            );
+          }}
+        />
+      </LinearGradient>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  menu: {
+    fontSize: 26,
+    color: "#fff",
+    marginRight: 10,
+  },
+
   title: {
     fontSize: 28,
     color: "#fff",
     fontWeight: "700",
-    marginBottom: 20,
   },
 
   card: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 15,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    padding: 18,
+    borderRadius: 18,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: "rgba(255,255,255,0.08)",
   },
 
   serviceTitle: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 19,
+    fontWeight: "700",
   },
 
   description: {
     color: "#94a3b8",
-    marginTop: 5,
+    marginTop: 6,
+    lineHeight: 18,
   },
 
   bottomRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 14,
   },
 
   price: {
     color: "#38bdf8",
-    fontWeight: "600",
+    fontWeight: "700",
+    fontSize: 16,
   },
 
   bookButton: {
     backgroundColor: "#3b82f6",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+  },
+
+  bookedButton: {
+    backgroundColor: "#22c55e",
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+  },
+
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
   },
 });

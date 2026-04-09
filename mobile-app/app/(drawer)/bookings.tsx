@@ -21,7 +21,6 @@ export default function Bookings() {
         `http://192.168.31.199:5000/api/bookings/user/${parsedUser.id}`
       );
 
-      console.log("USER BOOKINGS:", res.data); // 🔥 debug
       setBookings(res.data);
 
     } catch (err) {
@@ -33,16 +32,15 @@ export default function Bookings() {
     fetchBookings();
   }, []);
 
-  // 🔥 REFRESH WHEN SCREEN FOCUSES
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", fetchBookings);
     return unsubscribe;
   }, [navigation]);
 
-  const getStatusColor = (status: string) => {
-    if (status === "accepted") return "#22c55e";
-    if (status === "rejected") return "#ef4444";
-    return "#eab308"; // pending
+  const getStatusStyle = (status: string) => {
+    if (status === "accepted") return styles.accepted;
+    if (status === "rejected") return styles.rejected;
+    return styles.pending;
   };
 
   return (
@@ -52,14 +50,12 @@ export default function Bookings() {
         style={{ flex: 1, padding: 20 }}
       >
         {/* HEADER */}
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+        <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.openDrawer()}>
-            <Text style={{ fontSize: 26, color: "#fff", marginRight: 10 }}>☰</Text>
+            <Text style={styles.menu}>☰</Text>
           </TouchableOpacity>
 
-          <Text style={{ fontSize: 28, color: "#fff", fontWeight: "700" }}>
-            My Bookings
-          </Text>
+          <Text style={styles.title}>My Bookings</Text>
         </View>
 
         {/* LIST */}
@@ -67,27 +63,33 @@ export default function Bookings() {
           data={bookings}
           keyExtractor={(item: any) => item.id.toString()}
           ListEmptyComponent={
-            <Text style={{ color: "#94a3b8", textAlign: "center", marginTop: 50 }}>
-              No bookings yet
-            </Text>
+            <Text style={styles.emptyText}>No bookings yet</Text>
           }
           renderItem={({ item }: any) => (
             <View style={styles.card}>
-              {/* 🔥 FIXED FIELD NAME */}
+              
+              {/* TITLE */}
               <Text style={styles.service}>
                 {item.title || "Service"}
               </Text>
 
+              {/* DESCRIPTION (if exists) */}
+              {item.description && (
+                <Text style={styles.description}>
+                  {item.description}
+                </Text>
+              )}
+
+              {/* PRICE */}
               <Text style={styles.price}>₹ {item.price || "---"}</Text>
 
-              <Text
-                style={[
-                  styles.status,
-                  { color: getStatusColor(item.status) },
-                ]}
-              >
-                {item.status?.toUpperCase()}
-              </Text>
+              {/* STATUS BADGE */}
+              <View style={[styles.badge, getStatusStyle(item.status)]}>
+                <Text style={styles.badgeText}>
+                  {item.status?.toUpperCase()}
+                </Text>
+              </View>
+
             </View>
           )}
         />
@@ -97,28 +99,79 @@ export default function Bookings() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  menu: {
+    fontSize: 26,
+    color: "#fff",
+    marginRight: 10,
+  },
+
+  title: {
+    fontSize: 28,
+    color: "#fff",
+    fontWeight: "700",
+  },
+
   card: {
     backgroundColor: "rgba(255,255,255,0.05)",
     padding: 16,
-    borderRadius: 14,
-    marginBottom: 12,
+    borderRadius: 16,
+    marginBottom: 14,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
   },
 
   service: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
+  },
+
+  description: {
+    color: "#94a3b8",
+    marginTop: 4,
   },
 
   price: {
     color: "#38bdf8",
-    marginTop: 5,
+    marginTop: 6,
+    fontWeight: "600",
   },
 
-  status: {
-    marginTop: 8,
+  badge: {
+    marginTop: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    alignSelf: "flex-start",
+  },
+
+  badgeText: {
+    color: "#fff",
+    fontSize: 12,
     fontWeight: "600",
+  },
+
+  pending: {
+    backgroundColor: "#eab308",
+  },
+
+  accepted: {
+    backgroundColor: "#22c55e",
+  },
+
+  rejected: {
+    backgroundColor: "#ef4444",
+  },
+
+  emptyText: {
+    color: "#94a3b8",
+    textAlign: "center",
+    marginTop: 50,
   },
 });
