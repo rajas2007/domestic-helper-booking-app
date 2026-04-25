@@ -14,6 +14,7 @@ A full-stack mobile application connecting users with domestic service providers
   <li>Book services instantly</li>
   <li>View booking status (Pending / Accepted / Rejected)</li>
   <li>Prevent duplicate bookings</li>
+  <li>View worker details after booking is accepted</li>
   <li>Clean and intuitive UI</li>
 </ul>
 
@@ -22,6 +23,7 @@ A full-stack mobile application connecting users with domestic service providers
   <li>Add and manage services</li>
   <li>View booking requests</li>
   <li>Accept or reject bookings</li>
+  <li>View user details after accepting request</li>
   <li>Dedicated worker dashboard</li>
 </ul>
 
@@ -50,16 +52,34 @@ A full-stack mobile application connecting users with domestic service providers
 <ul>
   <li>Node.js</li>
   <li>Express.js</li>
-  <li>PostgreSQL</li>
+  <li>PostgreSQL (Render Hosted)</li>
   <li>JWT Authentication</li>
 </ul>
+
+<h3>☁️ Deployment</h3>
+<ul>
+  <li>Backend: Render</li>
+  <li>Database: Render PostgreSQL</li>
+  <li>Mobile App: APK built using EAS (Expo Application Services)</li>
+</ul>
+
+<hr/>
+
+<h2>🌐 Live Backend</h2>
+
+<p>
+https://domestic-helper-booking-app.onrender.com
+</p>
+
+<p><i>Note: Backend may take ~10–20 seconds to wake up on first request due to Render free tier.</i></p>
 
 <hr/>
 
 <h2>📸 App Screenshots</h2>
 
-<h3> Home page</h3>
+<h3>🏠 Home Page</h3>
 <img src="./screenshots/home.jpeg" width="250"/>
+
 <h3>🔐 Authentication</h3>
 <img src="./screenshots/login.jpeg" width="250"/>
 <img src="./screenshots/register.jpeg" width="250"/>
@@ -91,6 +111,7 @@ A full-stack mobile application connecting users with domestic service providers
   <li>Booking created with <b>Pending</b> status</li>
   <li>Worker receives request</li>
   <li>Worker accepts or rejects</li>
+  <li>Both user and worker can view each other's details after acceptance</li>
   <li>User sees updated status</li>
 </ol>
 
@@ -105,14 +126,20 @@ mobile-app/
  │    ├── home.tsx
  │    ├── bookings.tsx
  │    ├── worker.tsx
+ │    ├── my-services.tsx
  │    ├── settings.tsx
  │    └── profile.tsx
+ │
+ ├── assets/
+ ├── app.json
+ └── .env
 
 backend/
  ├── controllers/
  ├── routes/
  ├── models/
  ├── config/
+ ├── .env
  └── server.js
 </pre>
 
@@ -121,26 +148,52 @@ backend/
 <h2>⚙️ Setup Instructions</h2>
 
 <h3>1️⃣ Clone Repository</h3>
-<pre>git clone https://github.com/your-username/helperly-app.git
-cd helperly-app</pre>
+<pre>
+git clone https://github.com/your-username/helperly-app.git
+cd helperly-app
+</pre>
 
 <h3>2️⃣ Backend Setup</h3>
-<pre>cd backend
-npm install</pre>
+<pre>
+cd backend
+npm install
+</pre>
 
 <p>Create <b>.env</b> file:</p>
+
 <pre>
 PORT=5000
 DATABASE_URL=your_postgres_url
 JWT_SECRET=your_secret
 </pre>
 
-<pre>npm run dev</pre>
+<pre>
+npm run dev
+</pre>
 
 <h3>3️⃣ Frontend Setup</h3>
-<pre>cd frontend
+<pre>
+cd mobile-app
 npm install
-npm start</pre>
+</pre>
+
+<p>Create <b>.env</b> file:</p>
+
+<pre>
+EXPO_PUBLIC_API_URL=https://domestic-helper-booking-app.onrender.com
+</pre>
+
+<pre>
+npx expo start
+</pre>
+
+<hr/>
+
+<h2>📱 APK Build</h2>
+
+<pre>
+eas build -p android --profile preview
+</pre>
 
 <hr/>
 
@@ -165,8 +218,9 @@ npm start</pre>
   <li>Full end-to-end booking workflow</li>
   <li>Role-based system (User / Worker)</li>
   <li>Real-world UX (duplicate booking prevention)</li>
+  <li>Cloud-deployed backend & database</li>
+  <li>Production-ready mobile APK</li>
   <li>Modern UI with status badges</li>
-  <li>Scalable backend architecture</li>
 </ul>
 
 <hr/>
