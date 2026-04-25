@@ -19,7 +19,7 @@ export default function MyBookings() {
       const user = JSON.parse(userData);
 
       const res = await axios.get(
-        `https://semester-flight-those.ngrok-free.dev/api/bookings/user/${user.id}`
+        `https://domestic-helper-booking-app.onrender.com/api/bookings/user/${user.id}`
       );
 
       setBookings(res.data);

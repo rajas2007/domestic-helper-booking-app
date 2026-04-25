@@ -20,7 +20,7 @@ export default function MyServices() {
       const user = JSON.parse(userData || "{}");
 
       const res = await axios.get(
-        `https://semester-flight-those.ngrok-free.dev/api/services/worker/${user.id}`
+        `https://domestic-helper-booking-app.onrender.com/api/services/worker/${user.id}`
       );
 
       setServices(res.data);
@@ -35,12 +35,12 @@ export default function MyServices() {
       const user = JSON.parse(userData || "{}");
 
       await axios.post(
-        "https://semester-flight-those.ngrok-free.dev/api/services",
+        "https://domestic-helper-booking-app.onrender.com/api/services",
         {
           title,
           description,
           price: Number(price),
-          user_id: user.id,
+          worker_id: user.id,
         }
       );
 

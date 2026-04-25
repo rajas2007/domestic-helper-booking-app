@@ -4,11 +4,11 @@ const { getAllServices } = require("../models/serviceModel");
 // ================= CREATE SERVICE =================
 const addService = async (req, res) => {
   try {
-    const { title, description, price, user_id } = req.body;
+    const { title, description, price, worker_id } = req.body;
 
     const result = await db.query(
-      "INSERT INTO services (title, description, price, user_id, worker_id) VALUES ($1,$2,$3,$4,$5) RETURNING *",
-      [title, description, price, user_id, user_id]
+      "INSERT INTO services (title, description, price, worker_id) VALUES ($1,$2,$3,$4) RETURNING *",
+      [title, description, price, worker_id]
     );
 
     res.json(result.rows[0]);

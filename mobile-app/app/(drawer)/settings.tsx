@@ -43,7 +43,7 @@ export default function Settings() {
       const user = JSON.parse(userData);
 
       const res = await axios.put(
-        "https://semester-flight-those.ngrok-free.dev/api/auth/update",
+        "https://domestic-helper-booking-app.onrender.com/api/auth/update",
         {
           id: user.id,
           name: name.trim(),

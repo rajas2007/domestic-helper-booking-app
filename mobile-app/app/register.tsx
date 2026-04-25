@@ -26,7 +26,7 @@ export default function Register() {
 
     try {
       await axios.post(
-        "https://semester-flight-those.ngrok-free.dev/api/auth/register",
+        "https://domestic-helper-booking-app.onrender.com/api/auth/register",
         {
           name: name.trim(),
           email: email.trim(),

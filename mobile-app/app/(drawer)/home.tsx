@@ -17,7 +17,7 @@ export default function HomeScreen() {
       const user = JSON.parse(userData || "{}");
 
       const res = await axios.get(
-        "https://semester-flight-those.ngrok-free.dev/api/services"
+        "https://domestic-helper-booking-app.onrender.com/api/services"
       );
 
       // 🔥 FILTER OUT OWN SERVICES
@@ -39,7 +39,7 @@ export default function HomeScreen() {
       const user = JSON.parse(userData);
 
       const res = await axios.get(
-        `https://semester-flight-those.ngrok-free.dev/api/bookings/user/${user.id}`
+        `https://domestic-helper-booking-app.onrender.com/api/bookings/user/${user.id}`
       );
 
       const bookedIds = res.data.map((b: any) => b.service_id);
@@ -60,7 +60,7 @@ export default function HomeScreen() {
       const user = JSON.parse(userData || "{}");
 
       await axios.post(
-        "https://semester-flight-those.ngrok-free.dev/api/bookings/book",
+        "https://domestic-helper-booking-app.onrender.com/api/bookings/book",
         {
           service_id: serviceId,
           user_id: user.id,

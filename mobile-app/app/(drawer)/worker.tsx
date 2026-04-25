@@ -19,7 +19,7 @@ export default function Worker() {
       const user = JSON.parse(userData);
 
       const res = await axios.get(
-        `https://semester-flight-those.ngrok-free.dev/api/bookings/worker/${user.id}`
+        `https://domestic-helper-booking-app.onrender.com/api/bookings/worker/${user.id}`
       );
 
       setBookings(res.data);
@@ -40,7 +40,7 @@ export default function Worker() {
   const updateStatus = async (id: number, status: string) => {
     try {
       await axios.put(
-        `https://semester-flight-those.ngrok-free.dev/api/bookings/${id}`,
+        `https://domestic-helper-booking-app.onrender.com/api/bookings/${id}`,
         { status }
       );
 
