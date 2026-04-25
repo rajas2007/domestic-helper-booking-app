@@ -19,7 +19,7 @@ export default function Login() {
 
     try {
       const res = await axios.post(
-        "http://192.168.31.199:5000/api/auth/login",
+        "https://semester-flight-those.ngrok-free.dev/api/auth/login",
         { email, password }
       );
 

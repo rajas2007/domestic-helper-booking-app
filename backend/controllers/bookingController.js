@@ -35,9 +35,13 @@ const getUserBookings = async (req, res) => {
     const { user_id } = req.params;
 
     const result = await db.query(
-      `SELECT b.*, s.title, s.description, s.price 
+      `SELECT b.*, 
+              s.title, s.description, s.price,
+              w.name AS worker_name,
+              w.email AS worker_email
        FROM bookings b
        JOIN services s ON b.service_id = s.id
+       JOIN users w ON b.worker_id = w.id
        WHERE b.user_id = $1
        ORDER BY b.id DESC`,
       [user_id]
@@ -56,9 +60,13 @@ const getWorkerBookings = async (req, res) => {
     const { worker_id } = req.params;
 
     const result = await db.query(
-      `SELECT b.*, s.title, s.description, s.price 
+      `SELECT b.*, 
+              s.title, s.description, s.price,
+              u.name AS user_name,
+              u.email AS user_email
        FROM bookings b
        JOIN services s ON b.service_id = s.id
+       JOIN users u ON b.user_id = u.id
        WHERE b.worker_id = $1
        ORDER BY b.id DESC`,
       [worker_id]

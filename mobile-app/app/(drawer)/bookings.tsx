@@ -1,30 +1,30 @@
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function Bookings() {
+export default function MyBookings() {
   const navigation: any = useNavigation();
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const fetchBookings = async () => {
     try {
       const userData = await AsyncStorage.getItem("user");
       if (!userData) return;
 
-      const parsedUser = JSON.parse(userData);
+      const user = JSON.parse(userData);
 
       const res = await axios.get(
-        `http://192.168.31.199:5000/api/bookings/user/${parsedUser.id}`
+        `https://semester-flight-those.ngrok-free.dev/api/bookings/user/${user.id}`
       );
 
       setBookings(res.data);
-
     } catch (err) {
-      console.log("BOOKING FETCH ERROR:", err);
+      console.log("USER BOOKINGS ERROR:", err);
     }
   };
 
@@ -37,6 +37,10 @@ export default function Bookings() {
     return unsubscribe;
   }, [navigation]);
 
+  const toggleDropdown = (id: number) => {
+    setExpandedId(prev => (prev === id ? null : id));
+  };
+
   const getStatusStyle = (status: string) => {
     if (status === "accepted") return styles.accepted;
     if (status === "rejected") return styles.rejected;
@@ -44,7 +48,7 @@ export default function Bookings() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#020617" }}>
       <LinearGradient
         colors={["#020617", "#020617", "#0f172a"]}
         style={{ flex: 1, padding: 20 }}
@@ -63,35 +67,55 @@ export default function Bookings() {
           data={bookings}
           keyExtractor={(item: any) => item.id.toString()}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No bookings yet</Text>
+            <Text style={styles.emptyText}>No bookings found</Text>
           }
-          renderItem={({ item }: any) => (
-            <View style={styles.card}>
-              
-              {/* TITLE */}
-              <Text style={styles.service}>
-                {item.title || "Service"}
-              </Text>
+          renderItem={({ item }: any) => {
+            const isExpanded = expandedId === item.id;
 
-              {/* DESCRIPTION (if exists) */}
-              {item.description && (
-                <Text style={styles.description}>
-                  {item.description}
-                </Text>
-              )}
+            return (
+              <View style={styles.card}>
 
-              {/* PRICE */}
-              <Text style={styles.price}>₹ {item.price || "---"}</Text>
+                {/* TITLE */}
+                <Text style={styles.service}>{item.title}</Text>
 
-              {/* STATUS BADGE */}
-              <View style={[styles.badge, getStatusStyle(item.status)]}>
-                <Text style={styles.badgeText}>
-                  {item.status?.toUpperCase()}
-                </Text>
+                {/* DESCRIPTION */}
+                <Text style={styles.description}>{item.description}</Text>
+
+                {/* PRICE */}
+                <Text style={styles.price}>₹ {item.price}</Text>
+
+                {/* STATUS */}
+                <View style={[styles.badge, getStatusStyle(item.status)]}>
+                  <Text style={styles.badgeText}>
+                    {item.status?.toUpperCase()}
+                  </Text>
+                </View>
+
+                {/* DROPDOWN (ONLY WHEN ACCEPTED) */}
+                {item.status === "accepted" && (
+                  <>
+                    <TouchableOpacity onPress={() => toggleDropdown(item.id)}>
+                      <Text style={{ color: "#3b82f6", marginTop: 10 }}>
+                        {isExpanded ? "Hide Details ▲" : "View Details ▼"}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {isExpanded && (
+                      <View style={{ marginTop: 8 }}>
+                        <Text style={{ color: "#94a3b8" }}>
+                          Worker: {item.worker_name}
+                        </Text>
+                        <Text style={{ color: "#94a3b8" }}>
+                          Email: {item.worker_email}
+                        </Text>
+                      </View>
+                    )}
+                  </>
+                )}
+
               </View>
-
-            </View>
-          )}
+            );
+          }}
         />
       </LinearGradient>
     </SafeAreaView>
@@ -118,18 +142,16 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    padding: 16,
-    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    padding: 18,
+    borderRadius: 18,
     marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
   },
 
   service: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "700",
   },
 
   description: {
@@ -140,7 +162,7 @@ const styles = StyleSheet.create({
   price: {
     color: "#38bdf8",
     marginTop: 6,
-    fontWeight: "600",
+    fontWeight: "700",
   },
 
   badge: {

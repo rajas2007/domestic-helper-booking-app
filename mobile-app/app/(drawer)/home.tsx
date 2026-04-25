@@ -8,15 +8,26 @@ import { LinearGradient } from "expo-linear-gradient";
 
 export default function HomeScreen() {
   const navigation: any = useNavigation();
-  const [services, setServices] = useState([]);
+  const [services, setServices] = useState<any[]>([]);
   const [bookedServices, setBookedServices] = useState<number[]>([]);
 
   const fetchServices = async () => {
     try {
-      const res = await axios.get("http://192.168.31.199:5000/api/services");
-      setServices(res.data);
+      const userData = await AsyncStorage.getItem("user");
+      const user = JSON.parse(userData || "{}");
+
+      const res = await axios.get(
+        "https://semester-flight-those.ngrok-free.dev/api/services"
+      );
+
+      // 🔥 FILTER OUT OWN SERVICES
+      const filtered = res.data.filter(
+        (service: any) => service.worker_id !== user.id
+      );
+
+      setServices(filtered);
     } catch (err) {
-      console.log(err);
+      console.log("Fetch services error:", err);
     }
   };
 
@@ -28,13 +39,13 @@ export default function HomeScreen() {
       const user = JSON.parse(userData);
 
       const res = await axios.get(
-        `http://192.168.31.199:5000/api/bookings/user/${user.id}`
+        `https://semester-flight-those.ngrok-free.dev/api/bookings/user/${user.id}`
       );
 
       const bookedIds = res.data.map((b: any) => b.service_id);
       setBookedServices(bookedIds);
     } catch (err) {
-      console.log(err);
+      console.log("Fetch bookings error:", err);
     }
   };
 
@@ -48,10 +59,13 @@ export default function HomeScreen() {
       const userData = await AsyncStorage.getItem("user");
       const user = JSON.parse(userData || "{}");
 
-      await axios.post("http://192.168.31.199:5000/api/bookings/book", {
-        service_id: serviceId,
-        user_id: user.id,
-      });
+      await axios.post(
+        "https://semester-flight-those.ngrok-free.dev/api/bookings/book",
+        {
+          service_id: serviceId,
+          user_id: user.id,
+        }
+      );
 
       setBookedServices((prev) => [...prev, serviceId]);
       alert("Booked successfully");
@@ -61,7 +75,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#020617" }}>
       <LinearGradient
         colors={["#020617", "#020617", "#0f172a"]}
         style={{ flex: 1, padding: 20 }}
@@ -79,6 +93,12 @@ export default function HomeScreen() {
         <FlatList
           data={services}
           keyExtractor={(item: any) => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <Text style={{ color: "#94a3b8", textAlign: "center", marginTop: 20 }}>
+              No services available
+            </Text>
+          }
           renderItem={({ item }: any) => {
             const isBooked = bookedServices.includes(item.id);
 

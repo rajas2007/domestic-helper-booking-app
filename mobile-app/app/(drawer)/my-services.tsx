@@ -9,56 +9,66 @@ import { useNavigation } from "@react-navigation/native";
 export default function MyServices() {
   const navigation: any = useNavigation();
 
-  const [services, setServices] = useState([]);
+  const [services, setServices] = useState<any[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
 
   const fetchServices = async () => {
-    const userData = await AsyncStorage.getItem("user");
-    const user = JSON.parse(userData || "{}");
+    try {
+      const userData = await AsyncStorage.getItem("user");
+      const user = JSON.parse(userData || "{}");
 
-    const res = await axios.get(
-      `http://192.168.31.199:5000/api/services/worker/${user.id}`
-    );
+      const res = await axios.get(
+        `https://semester-flight-those.ngrok-free.dev/api/services/worker/${user.id}`
+      );
 
-    setServices(res.data);
+      setServices(res.data);
+    } catch (err) {
+      console.log("Fetch error:", err);
+    }
   };
 
   const addService = async () => {
-    const userData = await AsyncStorage.getItem("user");
-    const user = JSON.parse(userData || "{}");
+    try {
+      const userData = await AsyncStorage.getItem("user");
+      const user = JSON.parse(userData || "{}");
 
-    await axios.post("http://192.168.31.199:5000/api/services", {
-      title,
-      description,
-      price: Number(price),
-      user_id: user.id,
-    });
+      await axios.post(
+        "https://semester-flight-those.ngrok-free.dev/api/services",
+        {
+          title,
+          description,
+          price: Number(price),
+          user_id: user.id,
+        }
+      );
 
-    setTitle("");
-    setDescription("");
-    setPrice("");
+      setTitle("");
+      setDescription("");
+      setPrice("");
 
-    fetchServices();
+      fetchServices();
+    } catch (err) {
+      console.log("Add error:", err);
+    }
   };
 
- useEffect(() => {
-  fetchServices();
-}, []);
-
-useEffect(() => {
-  const unsubscribe = navigation.addListener("focus", () => {
+  useEffect(() => {
     fetchServices();
-  });
+  }, []);
 
-  return unsubscribe;
-}, [navigation]);
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", fetchServices);
+    return unsubscribe;
+  }, [navigation]);
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <LinearGradient colors={["#020617", "#0f172a"]} style={{ flex: 1, padding: 20 }}>
-        
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#020617" }}>
+      <LinearGradient
+        colors={["#020617", "#020617", "#0f172a"]}
+        style={{ flex: 1, padding: 20 }}
+      >
         {/* HEADER */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.openDrawer()}>
@@ -67,28 +77,62 @@ useEffect(() => {
           <Text style={styles.title}>My Services</Text>
         </View>
 
-        {/* ADD SERVICE */}
-        <View style={styles.card}>
-          <TextInput placeholder="Title" value={title} onChangeText={setTitle} style={styles.input} />
-          <TextInput placeholder="Description" value={description} onChangeText={setDescription} style={styles.input} />
-          <TextInput placeholder="Price" value={price} onChangeText={setPrice} style={styles.input} keyboardType="numeric" />
-
-          <TouchableOpacity onPress={addService}>
-            <LinearGradient colors={["#3b82f6", "#6366f1"]} style={styles.button}>
-              <Text style={{ color: "#fff" }}>Add Service</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
-
-        {/* LIST */}
+        {/* LIST (with header inside) */}
         <FlatList
           data={services}
           keyExtractor={(item: any) => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+          
+          ListHeaderComponent={
+            <>
+              {/* ADD SERVICE */}
+              <View style={styles.card}>
+                <TextInput
+                  placeholder="Title"
+                  placeholderTextColor="#94a3b8"
+                  value={title}
+                  onChangeText={setTitle}
+                  style={styles.input}
+                />
+
+                <TextInput
+                  placeholder="Description"
+                  placeholderTextColor="#94a3b8"
+                  value={description}
+                  onChangeText={setDescription}
+                  style={styles.input}
+                />
+
+                <TextInput
+                  placeholder="Price"
+                  placeholderTextColor="#94a3b8"
+                  value={price}
+                  onChangeText={setPrice}
+                  style={styles.input}
+                  keyboardType="numeric"
+                />
+
+                {/* BUTTON */}
+                <TouchableOpacity
+                  onPress={addService}
+                  style={styles.buttonWrapper}
+                >
+                  <LinearGradient
+                    colors={["#3b82f6", "#2563eb"]}
+                    style={styles.button}
+                  >
+                    <Text style={styles.buttonText}>Add Service</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </>
+          }
+
           renderItem={({ item }: any) => (
             <View style={styles.serviceCard}>
-              <Text style={{ color: "#fff", fontSize: 16 }}>{item.title}</Text>
-              <Text style={{ color: "#94a3b8" }}>{item.description}</Text>
-              <Text style={{ color: "#3b82f6" }}>₹ {item.price}</Text>
+              <Text style={styles.serviceTitle}>{item.title}</Text>
+              <Text style={styles.serviceDesc}>{item.description}</Text>
+              <Text style={styles.price}>₹ {item.price}</Text>
             </View>
           )}
         />
@@ -98,9 +142,23 @@ useEffect(() => {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
-  menu: { fontSize: 24, color: "#fff", marginRight: 10 },
-  title: { fontSize: 24, color: "#fff", fontWeight: "700" },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  menu: {
+    fontSize: 26,
+    color: "#fff",
+    marginRight: 10,
+  },
+
+  title: {
+    fontSize: 28,
+    color: "#fff",
+    fontWeight: "700",
+  },
 
   card: {
     marginBottom: 20,
@@ -112,15 +170,25 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: "rgba(255,255,255,0.05)",
     marginBottom: 10,
-    padding: 10,
+    padding: 12,
     borderRadius: 10,
     color: "#fff",
   },
 
-  button: {
-    padding: 12,
+  buttonWrapper: {
+    marginTop: 10,
     borderRadius: 10,
+    overflow: "hidden",
+  },
+
+  button: {
+    padding: 15,
     alignItems: "center",
+  },
+
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
   },
 
   serviceCard: {
@@ -128,5 +196,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "rgba(255,255,255,0.05)",
     marginBottom: 10,
+  },
+
+  serviceTitle: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  serviceDesc: {
+    color: "#94a3b8",
+    marginTop: 4,
+  },
+
+  price: {
+    color: "#3b82f6",
+    marginTop: 4,
   },
 });

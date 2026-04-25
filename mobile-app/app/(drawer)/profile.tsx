@@ -18,7 +18,7 @@ export default function Profile() {
   }, []);
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#020617" }}>
       <LinearGradient
         colors={["#020617", "#020617", "#0f172a"]}
         style={{ flex: 1, padding: 20 }}

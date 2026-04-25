@@ -43,7 +43,7 @@ export default function Settings() {
       const user = JSON.parse(userData);
 
       const res = await axios.put(
-        "http://192.168.31.199:5000/api/auth/update",
+        "https://semester-flight-those.ngrok-free.dev/api/auth/update",
         {
           id: user.id,
           name: name.trim(),
@@ -68,7 +68,7 @@ export default function Settings() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#020617" }}>
       <LinearGradient
         colors={["#020617", "#020617", "#0f172a"]}
         style={{ flex: 1, padding: 20 }}

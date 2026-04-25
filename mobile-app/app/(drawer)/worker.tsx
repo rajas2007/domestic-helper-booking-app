@@ -8,7 +8,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Worker() {
   const navigation: any = useNavigation();
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [expandedId, setExpandedId] = useState<number | null>(null); // ✅ dropdown state
 
   const fetchBookings = async () => {
     try {
@@ -18,11 +19,10 @@ export default function Worker() {
       const user = JSON.parse(userData);
 
       const res = await axios.get(
-        `http://192.168.31.199:5000/api/bookings/worker/${user.id}`
+        `https://semester-flight-those.ngrok-free.dev/api/bookings/worker/${user.id}`
       );
 
       setBookings(res.data);
-
     } catch (err) {
       console.log("WORKER FETCH ERROR:", err);
     }
@@ -40,7 +40,7 @@ export default function Worker() {
   const updateStatus = async (id: number, status: string) => {
     try {
       await axios.put(
-        `http://192.168.31.199:5000/api/bookings/${id}`,
+        `https://semester-flight-those.ngrok-free.dev/api/bookings/${id}`,
         { status }
       );
 
@@ -56,8 +56,12 @@ export default function Worker() {
     return styles.pending;
   };
 
+  const toggleDropdown = (id: number) => {
+    setExpandedId(prev => (prev === id ? null : id));
+  };
+
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#020617" }}>
       <LinearGradient
         colors={["#020617", "#020617", "#0f172a"]}
         style={{ flex: 1, padding: 20 }}
@@ -78,48 +82,74 @@ export default function Worker() {
           ListEmptyComponent={
             <Text style={styles.emptyText}>No booking requests</Text>
           }
-          renderItem={({ item }: any) => (
-            <View style={styles.card}>
-              
-              {/* TITLE */}
-              <Text style={styles.service}>{item.title}</Text>
+          renderItem={({ item }: any) => {
+            const isExpanded = expandedId === item.id;
 
-              {/* DESCRIPTION */}
-              {item.description && (
-                <Text style={styles.description}>{item.description}</Text>
-              )}
+            return (
+              <View style={styles.card}>
+                
+                {/* TITLE */}
+                <Text style={styles.service}>{item.title}</Text>
 
-              {/* PRICE */}
-              <Text style={styles.price}>₹ {item.price}</Text>
+                {/* DESCRIPTION */}
+                {item.description && (
+                  <Text style={styles.description}>{item.description}</Text>
+                )}
 
-              {/* STATUS BADGE */}
-              <View style={[styles.badge, getStatusStyle(item.status)]}>
-                <Text style={styles.badgeText}>
-                  {item.status?.toUpperCase()}
-                </Text>
-              </View>
+                {/* PRICE */}
+                <Text style={styles.price}>₹ {item.price}</Text>
 
-              {/* ACTION BUTTONS */}
-              {item.status === "pending" && (
-                <View style={styles.row}>
-                  <TouchableOpacity
-                    style={styles.accept}
-                    onPress={() => updateStatus(item.id, "accepted")}
-                  >
-                    <Text style={styles.buttonText}>Accept</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.reject}
-                    onPress={() => updateStatus(item.id, "rejected")}
-                  >
-                    <Text style={styles.buttonText}>Reject</Text>
-                  </TouchableOpacity>
+                {/* STATUS */}
+                <View style={[styles.badge, getStatusStyle(item.status)]}>
+                  <Text style={styles.badgeText}>
+                    {item.status?.toUpperCase()}
+                  </Text>
                 </View>
-              )}
 
-            </View>
-          )}
+                {/* ACTION BUTTONS */}
+                {item.status === "pending" && (
+                  <View style={styles.row}>
+                    <TouchableOpacity
+                      style={styles.accept}
+                      onPress={() => updateStatus(item.id, "accepted")}
+                    >
+                      <Text style={styles.buttonText}>Accept</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.reject}
+                      onPress={() => updateStatus(item.id, "rejected")}
+                    >
+                      <Text style={styles.buttonText}>Reject</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* DROPDOWN (ONLY WHEN ACCEPTED) */}
+                {item.status === "accepted" && (
+                  <>
+                    <TouchableOpacity onPress={() => toggleDropdown(item.id)}>
+                      <Text style={{ color: "#3b82f6", marginTop: 10 }}>
+                        {isExpanded ? "Hide Details ▲" : "View Details ▼"}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {isExpanded && (
+                      <View style={{ marginTop: 8 }}>
+                        <Text style={{ color: "#94a3b8" }}>
+                          User: {item.user_name}
+                        </Text>
+                        <Text style={{ color: "#94a3b8" }}>
+                          Email: {item.user_email}
+                        </Text>
+                      </View>
+                    )}
+                  </>
+                )}
+
+              </View>
+            );
+          }}
         />
       </LinearGradient>
     </SafeAreaView>

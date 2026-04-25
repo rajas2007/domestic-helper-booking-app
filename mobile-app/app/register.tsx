@@ -26,7 +26,7 @@ export default function Register() {
 
     try {
       await axios.post(
-        "http://192.168.31.199:5000/api/auth/register",
+        "https://semester-flight-those.ngrok-free.dev/api/auth/register",
         {
           name: name.trim(),
           email: email.trim(),
