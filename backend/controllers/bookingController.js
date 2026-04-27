@@ -149,9 +149,9 @@ const getRecentStatusChanges = async (req, res) => {
     let query = `
       SELECT b.*, s.title as service_title, u.name as user_name, w.name as worker_name
       FROM bookings b
-      JOIN services s ON b.service_id = s.id
-      JOIN users u ON b.user_id = u.id
-      JOIN users w ON b.worker_id = w.id
+      LEFT JOIN services s ON b.service_id = s.id
+      LEFT JOIN users u ON b.user_id = u.id
+      LEFT JOIN users w ON b.worker_id = w.id
       WHERE (b.user_id = $1 OR b.worker_id = $1)
       AND b.status IN ('accepted', 'rejected')
     `;
@@ -159,11 +159,13 @@ const getRecentStatusChanges = async (req, res) => {
     const params = [userId];
 
     if (since) {
-      query += " AND b.updated_at > $2";
+      // Use COALESCE to handle cases where updated_at might be null
+      query += " AND COALESCE(b.updated_at, b.created_at) > $2";
       params.push(new Date(parseInt(since)));
     }
 
-    query += " ORDER BY b.updated_at DESC LIMIT 50";
+    // Order by updated_at if available, otherwise created_at, then by id as tiebreaker
+    query += " ORDER BY COALESCE(b.updated_at, b.created_at) DESC, b.id DESC LIMIT 50";
 
     const result = await db.query(query, params);
 
