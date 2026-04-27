@@ -144,30 +144,25 @@ const updateBookingStatus = async (req, res) => {
 const getRecentStatusChanges = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { since } = req.query; // timestamp in milliseconds
 
-    let query = `
-      SELECT b.*, s.title as service_title, u.name as user_name, w.name as worker_name
+    // Query that matches the mobile app expectations
+    const query = `
+      SELECT
+        b.*,
+        s.title as service_title,
+        u.name as user_name,
+        w.name as worker_name,
+        b.updated_at
       FROM bookings b
       LEFT JOIN services s ON b.service_id = s.id
       LEFT JOIN users u ON b.user_id = u.id
       LEFT JOIN users w ON b.worker_id = w.id
       WHERE (b.user_id = $1 OR b.worker_id = $1)
       AND b.status IN ('accepted', 'rejected')
+      ORDER BY b.id DESC LIMIT 50
     `;
 
-    const params = [userId];
-
-    if (since) {
-      // Use COALESCE to handle cases where updated_at might be null
-      query += " AND COALESCE(b.updated_at, b.created_at) > $2";
-      params.push(new Date(parseInt(since)));
-    }
-
-    // Order by updated_at if available, otherwise created_at, then by id as tiebreaker
-    query += " ORDER BY COALESCE(b.updated_at, b.created_at) DESC, b.id DESC LIMIT 50";
-
-    const result = await db.query(query, params);
+    const result = await db.query(query, [parseInt(userId)]);
 
     res.json(result.rows);
   } catch (err) {

@@ -123,10 +123,10 @@ export const BookingNotificationProvider: React.FC<{ children: React.ReactNode }
         await NotificationStorage.saveNotification({
           id: `status-change-${change.id}-${notificationType}`,
           type: notificationType,
-          serviceName: change.service_title,
+          serviceName: change.service_title || "Service",
           userName,
-          workerName,
-          timestamp: new Date(change.updated_at).getTime(),
+          workerName: workerName || "Worker",
+          timestamp: change.updated_at ? new Date(change.updated_at).getTime() : Date.now(),
         });
       }
 
