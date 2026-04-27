@@ -116,8 +116,8 @@ export const BookingNotificationProvider: React.FC<{ children: React.ReactNode }
       // Create notifications for status changes
       for (const change of statusChanges) {
         const notificationType = change.status === "accepted" ? "accepted" : "rejected";
-        const userName = change.user_id === user.id ? change.user_name : "You";
-        const workerName = change.worker_name;
+        const userName = change.user_id === user.id ? (change.user_name || "User") : "You";
+        const workerName = change.worker_name || "Worker";
 
         // Store as persistent notification
         await NotificationStorage.saveNotification({
@@ -125,7 +125,7 @@ export const BookingNotificationProvider: React.FC<{ children: React.ReactNode }
           type: notificationType,
           serviceName: change.service_title || "Service",
           userName,
-          workerName: workerName || "Worker",
+          workerName,
           timestamp: change.updated_at ? new Date(change.updated_at).getTime() : Date.now(),
         });
       }

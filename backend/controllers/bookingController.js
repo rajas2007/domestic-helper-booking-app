@@ -145,7 +145,7 @@ const getRecentStatusChanges = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Query that matches the mobile app expectations with LEFT JOIN for safety
+    // Defensive query with error handling
     const query = `
       SELECT
         b.*,
@@ -162,11 +162,12 @@ const getRecentStatusChanges = async (req, res) => {
       ORDER BY b.id DESC LIMIT 50
     `;
 
-    const result = await db.query(query, [parseInt(userId)]);
-    res.json(result.rows);
+    const result = await db.query(query, [parseInt(userId) || 0]);
+    res.json(result.rows || []);
   } catch (err) {
     console.error("GET RECENT STATUS CHANGES ERROR:", err);
-    res.status(500).json({ message: "Error fetching recent status changes" });
+    // Return empty array instead of 500 error to prevent app crashes
+    res.json([]);
   }
 };
 
