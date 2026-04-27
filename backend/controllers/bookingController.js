@@ -144,27 +144,17 @@ const updateBookingStatus = async (req, res) => {
 const getRecentStatusChanges = async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log("GET RECENT STATUS CHANGES called with userId:", userId);
 
-    // Query that matches the mobile app expectations
-    const query = `
-      SELECT
-        b.*,
-        s.title as service_title,
-        u.name as user_name,
-        w.name as worker_name,
-        b.updated_at
-      FROM bookings b
-      LEFT JOIN services s ON b.service_id = s.id
-      LEFT JOIN users u ON b.user_id = u.id
-      LEFT JOIN users w ON b.worker_id = w.id
-      WHERE (b.user_id = $1 OR b.worker_id = $1)
-      AND b.status IN ('accepted', 'rejected')
-      ORDER BY b.id DESC LIMIT 50
-    `;
+    // Ultra simple query to test
+    const query = `SELECT * FROM bookings WHERE user_id = $1 OR worker_id = $1 LIMIT 10`;
+    console.log("Executing simple query with params:", [parseInt(userId)]);
 
     const result = await db.query(query, [parseInt(userId)]);
+    console.log("Simple query result:", result.rows.length, "rows");
 
-    res.json(result.rows);
+    // Return empty array for now to test if endpoint works
+    res.json([]);
   } catch (err) {
     console.error("GET RECENT STATUS CHANGES ERROR:", err);
     res.status(500).json({ message: "Error fetching recent status changes" });
