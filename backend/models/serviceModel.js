@@ -10,7 +10,12 @@ const createService = async (title, description, price, user_id) => {
 };
 
 const getAllServices = async () => {
-  const result = await pool.query("SELECT * FROM services");
+  const result = await pool.query(
+    `SELECT s.*, u.name AS worker_name 
+     FROM services s 
+     LEFT JOIN users u ON s.worker_id = u.id 
+     ORDER BY s.id DESC`
+  );
   return result.rows;
 };
 

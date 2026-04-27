@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const db = require("../config/db");
 const { createUser, findUserByEmail } = require("../models/userModel");
+const { validateRegister, validateLogin } = require("../utils/validators");
 
 // ================= REGISTER =================
 const register = async (req, res) => {
@@ -14,10 +15,16 @@ const register = async (req, res) => {
     const { name, email, password } = req.body;
     const role = req.body.role || "user";
 
+    // ✅ VALIDATE INPUT
+    const validationErrors = validateRegister({ name, email, password });
+    if (validationErrors) {
+      return res.status(400).json({ message: "Validation error", errors: validationErrors });
+    }
+
     const existingUser = await findUserByEmail(email);
 
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: "Email already registered" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -42,16 +49,22 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // ✅ VALIDATE INPUT
+    const validationErrors = validateLogin({ email, password });
+    if (validationErrors) {
+      return res.status(400).json({ message: "Validation error", errors: validationErrors });
+    }
+
     const user = await findUserByEmail(email);
 
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const token = jwt.sign(

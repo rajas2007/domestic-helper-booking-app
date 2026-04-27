@@ -1,20 +1,38 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
+import { validateLogin, ValidationErrors } from "../utils/validators";
+import { useToast } from "../hooks/useToast";
+import { useBookingNotification } from "../components/BookingNotificationProvider";
 
 export default function Login() {
   const router = useRouter();
+  const toast = useToast();
+  const { checkMissedNotifications } = useBookingNotification();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
+
+  const clearErrors = () => {
+    setErrors({});
+  };
 
   const handleLogin = async () => {
     if (loading) return;
 
+    // Validate input
+    const validationErrors = validateLogin({ email, password });
+    if (validationErrors) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    clearErrors();
     setLoading(true);
 
     try {
@@ -26,10 +44,18 @@ export default function Login() {
       await AsyncStorage.setItem("token", res.data.token);
       await AsyncStorage.setItem("user", JSON.stringify(res.data.user));
 
+      // Check for missed notifications after login
+      await checkMissedNotifications();
+
       router.replace("/(drawer)/home");
 
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Login failed");
+      const errorMsg = err?.response?.data?.message || "Login failed";
+      if (err?.response?.data?.errors) {
+        setErrors(err.response.data.errors);
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -57,36 +83,64 @@ export default function Login() {
       </View>
 
       <View style={{ marginTop: 40 }}>
-        <Text style={{ color: "#cbd5f5", marginBottom: 6 }}>Email</Text>
-        <TextInput
-          placeholder="Enter your email"
-          placeholderTextColor="#64748b"
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-        />
+        {/* EMAIL INPUT */}
+        <View>
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            placeholder="Enter your email"
+            placeholderTextColor="#64748b"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (errors.email) {
+                setErrors({ ...errors, email: undefined });
+              }
+            }}
+            editable={!loading}
+            style={[styles.input, errors.email && styles.inputError]}
+          />
+          {errors.email && (
+            <Text style={styles.errorMessage}>✕ {errors.email}</Text>
+          )}
+        </View>
 
-        <Text style={{ color: "#cbd5f5", marginTop: 20, marginBottom: 6 }}>
-          Password
-        </Text>
-        <TextInput
-          placeholder="Enter your password"
-          placeholderTextColor="#64748b"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          style={styles.input}
-        />
+        {/* PASSWORD INPUT */}
+        <View style={{ marginTop: 20 }}>
+          <Text style={styles.label}>Password</Text>
+          <TextInput
+            placeholder="Enter your password"
+            placeholderTextColor="#64748b"
+            secureTextEntry
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (errors.password) {
+                setErrors({ ...errors, password: undefined });
+              }
+            }}
+            editable={!loading}
+            style={[styles.input, errors.password && styles.inputError]}
+          />
+          {errors.password && (
+            <Text style={styles.errorMessage}>✕ {errors.password}</Text>
+          )}
+        </View>
       </View>
 
-      <TouchableOpacity onPress={handleLogin} style={{ marginTop: 40 }}>
+      <TouchableOpacity
+        onPress={handleLogin}
+        disabled={loading}
+        style={{ marginTop: 40 }}
+      >
         <LinearGradient
-          colors={["#3b82f6", "#6366f1"]}
+          colors={loading ? ["#64748b", "#475569"] : ["#3b82f6", "#6366f1"]}
           style={styles.button}
         >
-          <Text style={styles.buttonText}>
-            {loading ? "Logging in..." : "Login"}
-          </Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.buttonText}>Login</Text>
+          )}
         </LinearGradient>
       </TouchableOpacity>
 
@@ -104,13 +158,32 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+  label: {
+    color: "#cbd5f5",
+    marginBottom: 8,
+    fontSize: 14,
+    fontWeight: "500",
+  },
+
   input: {
     backgroundColor: "rgba(255,255,255,0.05)",
     borderRadius: 14,
     padding: 16,
     color: "#fff",
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "rgba(255,255,255,0.1)",
+    fontSize: 16,
+  },
+
+  inputError: {
+    borderColor: "#ef4444",
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+  },
+
+  errorMessage: {
+    color: "#ef4444",
+    fontSize: 12,
+    marginTop: 6,
   },
 
   button: {

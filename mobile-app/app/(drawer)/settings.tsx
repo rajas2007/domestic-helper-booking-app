@@ -5,9 +5,12 @@ import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { useToast } from "../../hooks/useToast";
+import { AppTheme } from "../../constants/theme";
 
 export default function Settings() {
   const navigation: any = useNavigation();
+  const toast = useToast();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -35,8 +38,8 @@ export default function Settings() {
       const userData = await AsyncStorage.getItem("user");
 
       if (!userData) {
-        alert("User not found");
-        setLoading(false); // ✅ FIX
+        toast.error("User not found");
+        setLoading(false);
         return;
       }
 
@@ -57,20 +60,19 @@ export default function Settings() {
 
       setPassword(""); // ✅ clear password field
 
-      alert("Profile updated successfully");
+      toast.success("Profile updated successfully");
 
     } catch (err: any) {
-      console.log("Update error:", err?.response?.data || err.message);
-      alert("Update failed");
+      toast.error("Update failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#020617" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: AppTheme.background }}>
       <LinearGradient
-        colors={["#020617", "#020617", "#0f172a"]}
+        colors={AppTheme.gradientBackground}
         style={{ flex: 1, padding: 20 }}
       >
         {/* HEADER */}
@@ -83,13 +85,15 @@ export default function Settings() {
 
         {/* CARD */}
         <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Edit Profile</Text>
+
           <Text style={styles.label}>Name</Text>
           <TextInput
             value={name}
             onChangeText={setName}
             style={styles.input}
             placeholder="Enter name"
-            placeholderTextColor="#64748b"
+            placeholderTextColor={AppTheme.textMuted}
           />
 
           <Text style={styles.label}>Email</Text>
@@ -98,28 +102,28 @@ export default function Settings() {
             onChangeText={setEmail}
             style={styles.input}
             placeholder="Enter email"
-            placeholderTextColor="#64748b"
+            placeholderTextColor={AppTheme.textMuted}
           />
 
-          <Text style={styles.label}>Password</Text>
+          <Text style={styles.label}>New Password</Text>
           <TextInput
             value={password}
             onChangeText={setPassword}
             style={styles.input}
-            placeholder="Enter new password"
-            placeholderTextColor="#64748b"
+            placeholder="Leave blank to keep current"
+            placeholderTextColor={AppTheme.textMuted}
             secureTextEntry
           />
         </View>
 
         {/* BUTTON */}
         <TouchableOpacity
-          style={{ marginTop: 20 }}
+          style={styles.buttonWrapper}
           onPress={handleSave}
-          disabled={loading} // ✅ prevents spam
+          disabled={loading}
         >
           <LinearGradient
-            colors={["#3b82f6", "#6366f1"]}
+            colors={loading ? ["#64748b", "#475569"] as const : AppTheme.gradientAccent}
             style={styles.button}
           >
             <Text style={styles.buttonText}>
@@ -133,45 +137,47 @@ export default function Settings() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-
-  menu: {
-    fontSize: 24,
-    color: "#fff",
-    marginRight: 10,
-  },
-
-  title: {
-    fontSize: 26,
-    color: "#fff",
-    fontWeight: "700",
-  },
+  header: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
+  menu: { fontSize: 24, color: "#fff", marginRight: 10 },
+  title: { fontSize: 26, color: "#fff", fontWeight: "700" },
 
   card: {
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: AppTheme.card,
     padding: 20,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: AppTheme.cardBorder,
+  },
+
+  sectionTitle: {
+    color: AppTheme.textHighlight,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 16,
   },
 
   label: {
-    color: "#94a3b8",
+    color: AppTheme.textSecondary,
     marginTop: 10,
-    marginBottom: 5,
+    marginBottom: 6,
+    fontSize: 13,
+    fontWeight: '500',
   },
 
   input: {
     backgroundColor: "rgba(255,255,255,0.05)",
     borderRadius: 12,
-    padding: 12,
+    padding: 14,
     color: "#fff",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
+    fontSize: 15,
+  },
+
+  buttonWrapper: {
+    marginTop: 20,
+    borderRadius: 14,
+    overflow: 'hidden',
   },
 
   button: {

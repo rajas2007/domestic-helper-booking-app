@@ -1,17 +1,53 @@
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
-import { useEffect, useState } from "react";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from "react-native";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useToast } from "../../hooks/useToast";
+import { getErrorMessage } from "../../utils/errorHandler";
+import { useBookingNotification } from "../../components/BookingNotificationProvider";
+import { StatusBadge } from "../../components/StatusBadge";
+import { EmptyState } from "../../components/EmptyState";
+import { AnimatedPressable } from "../../components/AnimatedPressable";
+import { AppTheme } from "../../constants/theme";
 
 export default function MyBookings() {
   const navigation: any = useNavigation();
   const [bookings, setBookings] = useState<any[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [previousBookings, setPreviousBookings] = useState<any[]>([]);
+  const toast = useToast();
+  const { showBookingDecision } = useBookingNotification();
 
-  const fetchBookings = async () => {
+  const checkForStatusChanges = useCallback((oldBookings: any[], newBookings: any[]) => {
+    newBookings.forEach(newBooking => {
+      const oldBooking = oldBookings.find(b => b.id === newBooking.id);
+
+      if (oldBooking && oldBooking.status !== newBooking.status) {
+        // Status changed
+        if (newBooking.status === "accepted") {
+          showBookingDecision(
+            "accepted",
+            newBooking.title,
+            newBooking.user?.name || "You",
+            newBooking.worker?.name || "Worker"
+          );
+        } else if (newBooking.status === "rejected") {
+          showBookingDecision(
+            "rejected",
+            newBooking.title,
+            newBooking.user?.name || "You",
+            newBooking.worker?.name || "Worker"
+          );
+        }
+      }
+    });
+  }, [showBookingDecision]);
+
+  const fetchBookings = useCallback(async () => {
     try {
       const userData = await AsyncStorage.getItem("user");
       if (!userData) return;
@@ -22,35 +58,50 @@ export default function MyBookings() {
         `https://domestic-helper-booking-app.onrender.com/api/bookings/user/${user.id}`
       );
 
-      setBookings(res.data);
-    } catch (err) {
-      console.log("USER BOOKINGS ERROR:", err);
+      const newBookings = res.data;
+
+      // Check for status changes and show notifications
+      checkForStatusChanges(previousBookings, newBookings);
+
+      setBookings(newBookings);
+      setPreviousBookings(newBookings);
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
     }
-  };
+  }, [previousBookings, toast, checkForStatusChanges]);
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [fetchBookings]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", fetchBookings);
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, fetchBookings]);
+
+  // Real-time polling for booking status updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchBookings();
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [fetchBookings]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchBookings();
+    setRefreshing(false);
+  };
 
   const toggleDropdown = (id: number) => {
     setExpandedId(prev => (prev === id ? null : id));
   };
 
-  const getStatusStyle = (status: string) => {
-    if (status === "accepted") return styles.accepted;
-    if (status === "rejected") return styles.rejected;
-    return styles.pending;
-  };
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#020617" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: AppTheme.background }}>
       <LinearGradient
-        colors={["#020617", "#020617", "#0f172a"]}
+        colors={AppTheme.gradientBackground}
         style={{ flex: 1, padding: 20 }}
       >
         {/* HEADER */}
@@ -66,14 +117,26 @@ export default function MyBookings() {
         <FlatList
           data={bookings}
           keyExtractor={(item: any) => item.id.toString()}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[AppTheme.primary]}
+              tintColor={AppTheme.primary}
+            />
+          }
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No bookings found</Text>
+            <EmptyState
+              icon="📅"
+              title="No bookings yet"
+              subtitle="Your booking history will appear here once you book a service"
+            />
           }
           renderItem={({ item }: any) => {
             const isExpanded = expandedId === item.id;
 
             return (
-              <View style={styles.card}>
+              <AnimatedPressable style={styles.card}>
 
                 {/* TITLE */}
                 <Text style={styles.service}>{item.title}</Text>
@@ -84,36 +147,44 @@ export default function MyBookings() {
                 {/* PRICE */}
                 <Text style={styles.price}>₹ {item.price}</Text>
 
-                {/* STATUS */}
-                <View style={[styles.badge, getStatusStyle(item.status)]}>
-                  <Text style={styles.badgeText}>
-                    {item.status?.toUpperCase()}
-                  </Text>
-                </View>
+                {/* STATUS BADGE */}
+                <StatusBadge status={item.status} />
 
                 {/* DROPDOWN (ONLY WHEN ACCEPTED) */}
                 {item.status === "accepted" && (
                   <>
                     <TouchableOpacity onPress={() => toggleDropdown(item.id)}>
-                      <Text style={{ color: "#3b82f6", marginTop: 10 }}>
+                      <Text style={styles.detailsLink}>
                         {isExpanded ? "Hide Details ▲" : "View Details ▼"}
                       </Text>
                     </TouchableOpacity>
 
                     {isExpanded && (
-                      <View style={{ marginTop: 8 }}>
-                        <Text style={{ color: "#94a3b8" }}>
-                          Worker: {item.worker_name}
-                        </Text>
-                        <Text style={{ color: "#94a3b8" }}>
-                          Email: {item.worker_email}
-                        </Text>
+                      <View style={styles.detailsContainer}>
+                        <View style={styles.detailRow}>
+                          <View style={styles.detailAvatar}>
+                            <Text style={styles.detailAvatarText}>
+                              {item.worker_name?.charAt(0)?.toUpperCase() || "W"}
+                            </Text>
+                          </View>
+                          <View>
+                            <Text style={styles.detailLabel}>Worker</Text>
+                            <Text style={styles.detailValue}>{item.worker_name}</Text>
+                          </View>
+                        </View>
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailIcon}>✉️</Text>
+                          <View>
+                            <Text style={styles.detailLabel}>Email</Text>
+                            <Text style={styles.detailValue}>{item.worker_email}</Text>
+                          </View>
+                        </View>
                       </View>
                     )}
                   </>
                 )}
 
-              </View>
+              </AnimatedPressable>
             );
           }}
         />
@@ -142,58 +213,83 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: AppTheme.card,
     padding: 18,
     borderRadius: 18,
     marginBottom: 14,
+    borderWidth: 1,
+    borderColor: AppTheme.cardBorder,
   },
 
   service: {
-    color: "#fff",
+    color: AppTheme.textPrimary,
     fontSize: 18,
     fontWeight: "700",
   },
 
   description: {
-    color: "#94a3b8",
+    color: AppTheme.textSecondary,
     marginTop: 4,
   },
 
   price: {
-    color: "#38bdf8",
+    color: AppTheme.priceColor,
     marginTop: 6,
     fontWeight: "700",
   },
 
-  badge: {
-    marginTop: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    alignSelf: "flex-start",
+  detailsLink: {
+    color: AppTheme.primary,
+    marginTop: 12,
+    fontWeight: '500',
   },
 
-  badgeText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "600",
+  detailsContainer: {
+    marginTop: 12,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 12,
+    padding: 14,
+    gap: 12,
   },
 
-  pending: {
-    backgroundColor: "#eab308",
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
 
-  accepted: {
-    backgroundColor: "#22c55e",
+  detailAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: AppTheme.primaryGlow,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
   },
 
-  rejected: {
-    backgroundColor: "#ef4444",
+  detailAvatarText: {
+    color: AppTheme.primary,
+    fontWeight: '700',
+    fontSize: 16,
   },
 
-  emptyText: {
-    color: "#94a3b8",
-    textAlign: "center",
-    marginTop: 50,
+  detailIcon: {
+    fontSize: 20,
+    width: 36,
+    textAlign: 'center',
+  },
+
+  detailLabel: {
+    color: AppTheme.textMuted,
+    fontSize: 11,
+    fontWeight: '500',
+  },
+
+  detailValue: {
+    color: AppTheme.textHighlight,
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

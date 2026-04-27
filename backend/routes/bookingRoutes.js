@@ -6,6 +6,7 @@ const {
   getUserBookings,
   getWorkerBookings,
   updateBookingStatus,
+  getRecentStatusChanges,
 } = require('../controllers/bookingController');
 
 // ================= CREATE BOOKING =================
@@ -19,5 +20,8 @@ router.get('/worker/:worker_id', getWorkerBookings);
 
 // ================= UPDATE STATUS =================
 router.put('/:id', updateBookingStatus);
+
+// ================= RECENT STATUS CHANGES =================
+router.get('/status-changes/:userId', getRecentStatusChanges);
 
 module.exports = router;
