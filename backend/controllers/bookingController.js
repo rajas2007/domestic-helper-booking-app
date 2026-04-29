@@ -101,11 +101,22 @@ const getWorkerBookings = async (req, res) => {
 
 // ================= UPDATE STATUS =================
 const updateBookingStatus = async (req, res) => {
+  console.log("=== UPDATE BOOKING STATUS STARTED ===");
+  console.log("Headers:", req.headers);
+  console.log("Params:", req.params);
+  console.log("Body:", req.body);
+
   try {
     const { id } = req.params;
     const { status } = req.body;
 
     console.log(`Updating booking ${id} to status: ${status}`);
+
+    // ✅ VALIDATE INPUT
+    if (!id || isNaN(parseInt(id))) {
+      console.log(`Invalid booking ID: ${id}`);
+      return res.status(400).json({ message: "Invalid booking ID" });
+    }
 
     // ✅ VALIDATE STATUS
     const validStatuses = ["pending", "accepted", "rejected"];
@@ -114,11 +125,19 @@ const updateBookingStatus = async (req, res) => {
       return res.status(400).json({ message: "Invalid booking status" });
     }
 
+    // First, let's check database connection
+    console.log("Testing database connection...");
+    const testQuery = await db.query("SELECT NOW() as current_time");
+    console.log("Database connection OK:", testQuery.rows[0]);
+
     // ✅ CHECK IF BOOKING EXISTS
+    console.log(`Checking if booking ${id} exists...`);
     const existingBooking = await db.query(
       "SELECT * FROM bookings WHERE id=$1",
-      [id]
+      [parseInt(id)]
     );
+
+    console.log(`Found ${existingBooking.rows.length} bookings with id ${id}`);
 
     if (existingBooking.rows.length === 0) {
       console.log(`Booking ${id} not found`);
@@ -134,16 +153,44 @@ const updateBookingStatus = async (req, res) => {
       return res.status(400).json({ message: "Booking status cannot be changed once accepted or rejected" });
     }
 
-    const result = await db.query(
-      "UPDATE bookings SET status=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2 RETURNING *",
-      [status, id]
-    );
+    // Try to update with updated_at first, fallback without it
+    let result;
+    try {
+      console.log("Attempting update with updated_at...");
+      result = await db.query(
+        "UPDATE bookings SET status=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2 RETURNING *",
+        [status, parseInt(id)]
+      );
+      console.log("Update with updated_at successful");
+    } catch (updateError) {
+      console.log("updated_at column might not exist, trying without it:", updateError.message);
+      // Fallback: update without updated_at
+      console.log("Attempting update without updated_at...");
+      result = await db.query(
+        "UPDATE bookings SET status=$1 WHERE id=$2 RETURNING *",
+        [status, parseInt(id)]
+      );
+      console.log("Update without updated_at successful");
+    }
 
     console.log(`Successfully updated booking ${id} to ${status}`);
+    console.log("=== UPDATE BOOKING STATUS COMPLETED ===");
     res.json(result.rows[0]);
   } catch (err) {
-    console.error("UPDATE BOOKING STATUS ERROR:", err);
-    res.status(500).json({ message: "Error updating booking status" });
+    console.error("=== UPDATE BOOKING STATUS ERROR ===");
+    console.error("Error message:", err.message);
+    console.error("Error code:", err.code);
+    console.error("Error stack:", err.stack);
+    console.error("Request details:", { params: req.params, body: req.body });
+
+    // More detailed error response
+    res.status(500).json({
+      message: "Error updating booking status",
+      error: err.message,
+      code: err.code,
+      bookingId: req.params.id,
+      requestedStatus: req.body.status
+    });
   }
 };
 
