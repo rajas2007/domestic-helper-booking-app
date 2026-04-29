@@ -205,8 +205,7 @@ const getRecentStatusChanges = async (req, res) => {
         b.*,
         s.title as service_title,
         u.name as user_name,
-        w.name as worker_name,
-        b.updated_at
+        w.name as worker_name
       FROM bookings b
       LEFT JOIN services s ON b.service_id = s.id
       LEFT JOIN users u ON b.user_id = u.id
