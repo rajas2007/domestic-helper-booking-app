@@ -6,13 +6,13 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState, useCallback, useMemo } from "react";
-import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useToast } from "../../hooks/useToast";
 import { getErrorMessage } from "../../utils/errorHandler";
 import { EmptyState } from "../../components/EmptyState";
 import { AnimatedPressable } from "../../components/AnimatedPressable";
 import { AppTheme, SERVICE_CATEGORIES, ServiceCategoryId } from "../../constants/theme";
+import api from "../../utils/api";
 
 export default function HomeScreen() {
   const navigation: any = useNavigation();
@@ -28,7 +28,7 @@ export default function HomeScreen() {
     try {
       const userData = await AsyncStorage.getItem("user");
       const user = JSON.parse(userData || "{}");
-      const res = await axios.get("https://domestic-helper-booking-app.onrender.com/api/services");
+      const res = await api.get("/api/services");
       const filtered = res.data.filter((s: any) => s.worker_id !== user.id);
       setServices(filtered);
     } catch (err: any) { toast.error(getErrorMessage(err)); }
@@ -39,7 +39,7 @@ export default function HomeScreen() {
       const userData = await AsyncStorage.getItem("user");
       if (!userData) return;
       const user = JSON.parse(userData);
-      const res = await axios.get(`https://domestic-helper-booking-app.onrender.com/api/bookings/user/${user.id}`);
+      const res = await api.get(`/api/bookings/user/${user.id}`);
       setBookedServices(res.data.map((b: any) => b.service_id));
     } catch (err: any) { toast.error(getErrorMessage(err)); }
   }, [toast]);
@@ -84,7 +84,7 @@ export default function HomeScreen() {
     try {
       const userData = await AsyncStorage.getItem("user");
       const user = JSON.parse(userData || "{}");
-      await axios.post("https://domestic-helper-booking-app.onrender.com/api/bookings/book", { service_id: serviceId, user_id: user.id });
+      await api.post("/api/bookings/book", { service_id: serviceId, user_id: user.id });
       setBookedServices((prev) => [...prev, serviceId]);
       toast.success("Booked successfully");
     } catch (err: any) { toast.error(getErrorMessage(err)); }

@@ -1,12 +1,13 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import axios from "axios";
+import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { validateLogin, ValidationErrors } from "../utils/validators";
 import { useToast } from "../hooks/useToast";
 import { useBookingNotification } from "../components/BookingNotificationProvider";
+import api from "../utils/api";
 
 export default function Login() {
   const router = useRouter();
@@ -36,13 +37,18 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "https://domestic-helper-booking-app.onrender.com/api/auth/login",
-        { email, password }
-      );
+      const res = await api.post("/api/auth/login", { email, password });
 
-      await AsyncStorage.setItem("token", res.data.token);
-      await AsyncStorage.setItem("user", JSON.stringify(res.data.user));
+      // ✅ Store token securely
+      await SecureStore.setItemAsync('token', res.data.token);
+
+      // Store non-sensitive user data in AsyncStorage
+      await AsyncStorage.setItem("user", JSON.stringify({
+        id: res.data.user.id,
+        name: res.data.user.name,
+        email: res.data.user.email,
+        role: res.data.user.role
+      }));
 
       // Check for missed notifications after login
       await checkMissedNotifications();
