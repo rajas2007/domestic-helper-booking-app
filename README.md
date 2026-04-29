@@ -1,146 +1,172 @@
 <h1 align="center">🏠 Helperly – Domestic Services Booking App</h1>
 
 <p align="center">
-A full-stack mobile application connecting users with domestic service providers, featuring real-time booking flow, role-based access, and a polished modern UI.
+A full-stack mobile application that connects users with trusted domestic service providers.<br/>
+Built with a focus on real-world UX, smooth booking flow, and modern mobile design.
 </p>
 
-<hr/>
-
-<h2>🚀 Features</h2>
-
-<h3>👤 User Features</h3>
-<ul>
-  <li>Browse available services</li>
-  <li>Book services instantly</li>
-  <li>View booking status (Pending / Accepted / Rejected)</li>
-  <li>Prevent duplicate bookings</li>
-  <li>View worker details after booking is accepted</li>
-  <li>Clean and intuitive UI</li>
-</ul>
-
-<h3>👷 Worker Features</h3>
-<ul>
-  <li>Add and manage services</li>
-  <li>View booking requests</li>
-  <li>Accept or reject bookings</li>
-  <li>View user details after accepting request</li>
-  <li>Dedicated worker dashboard</li>
-</ul>
-
-<h3>🔐 Authentication</h3>
-<ul>
-  <li>Secure login & registration</li>
-  <li>Role-based access (User / Worker)</li>
-  <li>Persistent login using AsyncStorage</li>
-  <li>JWT-based authentication</li>
-</ul>
-
-<hr/>
-
-<h2>🧠 Tech Stack</h2>
-
-<h3>📱 Frontend</h3>
-<ul>
-  <li>React Native (Expo)</li>
-  <li>Expo Router</li>
-  <li>Axios</li>
-  <li>AsyncStorage</li>
-  <li>Expo Linear Gradient</li>
-</ul>
-
-<h3>🖥 Backend</h3>
-<ul>
-  <li>Node.js</li>
-  <li>Express.js</li>
-  <li>PostgreSQL (Render Hosted)</li>
-  <li>JWT Authentication</li>
-</ul>
-
-<h3>☁️ Deployment</h3>
-<ul>
-  <li>Backend: Render</li>
-  <li>Database: Render PostgreSQL</li>
-  <li>Mobile App: APK built using EAS (Expo Application Services)</li>
-</ul>
-
-<hr/>
-
-<h2>🌐 Live Backend</h2>
-
-<p>
-https://domestic-helper-booking-app.onrender.com
+<p align="center">
+🚀 <b>Production-ready Android APK available</b><br/>
+<a href="https://expo.dev/accounts/rajassg/projects/mobile-app/builds/0f4ef87b-56de-4242-80de-b263b292ad25">
+👉 Download Latest APK
+</a>
 </p>
 
-<p><i>Note: Backend may take ~10–20 seconds to wake up on first request due to Render free tier.</i></p>
+---
 
-<hr/>
+## ✨ Key Highlights
 
-<h2>📸 App Screenshots</h2>
+- 🔁 Complete booking lifecycle (User ↔ Worker)
+- 🔐 Secure authentication with JWT
+- ⚡ Real-time UX with status updates & feedback
+- 🎯 Clean UI with modern mobile design principles
+- ☁️ Fully deployed backend & database (Render)
+- 📱 APK build using Expo EAS
 
-<h3>🏠 Home Page</h3>
-<img src="./screenshots/home.jpeg" width="250"/>
+---
 
-<h3>🔐 Authentication</h3>
-<img src="./screenshots/login.jpeg" width="250"/>
-<img src="./screenshots/register.jpeg" width="250"/>
+## 🚀 Features
 
-<h3>🏠 Explore Services</h3>
-<img src="./screenshots/explore.jpeg" width="250"/>
-<img src="./screenshots/booked-state.jpeg" width="250"/>
+### 👤 User
+- Browse available services
+- Book services instantly
+- View booking status (Pending / Accepted / Rejected)
+- Prevent duplicate bookings
+- View worker details after acceptance
 
-<h3>📦 Booking System</h3>
-<img src="./screenshots/bookings.jpeg" width="250"/>
+---
 
-<h3>👷 Worker Panel</h3>
-<img src="./screenshots/worker.jpeg" width="250"/>
-<img src="./screenshots/accept-reject.jpeg" width="250"/>
-<img src="./screenshots/accepted-status.jpeg" width="250"/>
+### 👷 Worker
+- Add, edit, and delete services
+- View incoming booking requests
+- Accept or reject bookings
+- View user details after accepting
 
-<h3>⚙️ Profile & Settings</h3>
-<img src="./screenshots/profile.jpeg" width="250"/>
-<img src="./screenshots/settings.jpeg" width="250"/>
-<img src="./screenshots/drawer.jpeg" width="250"/>
+---
 
-<hr/>
+### 🔐 Authentication
+- Secure login & registration
+- Role-based access (User / Worker)
+- Persistent sessions using AsyncStorage
+- JWT-based authentication
 
-<h2>🔄 Booking Flow</h2>
+---
 
-<ol>
-  <li>User browses services</li>
-  <li>User clicks <b>Book</b></li>
-  <li>Booking created with <b>Pending</b> status</li>
-  <li>Worker receives request</li>
-  <li>Worker accepts or rejects</li>
-  <li>Both user and worker can view each other's details after acceptance</li>
-  <li>User sees updated status</li>
-</ol>
+## 🌐 Live Backend
 
-<hr/>
+🔗 https://domestic-helper-booking-app.onrender.com  
 
-<h2>🧩 Project Structure</h2>
+> ⚠️ Note: Backend may take 10–20 seconds to wake up (Render free tier)
+
+---
+
+## 📸 App Screenshots
+
+### 🏠 Home & Explore
+<p align="center">
+  <img src="./screenshots/home.jpeg" width="220"/>
+  <img src="./screenshots/explore.jpeg" width="220"/>
+  <img src="./screenshots/booked-state.jpeg" width="220"/>
+</p>
+
+---
+
+### 🔐 Authentication
+<p align="center">
+  <img src="./screenshots/login.jpeg" width="220"/>
+  <img src="./screenshots/register.jpeg" width="220"/>
+</p>
+
+---
+
+### 📦 Booking System
+<p align="center">
+  <img src="./screenshots/bookings.jpeg" width="220"/>
+  <img src="./screenshots/accepted-status.jpeg" width="220"/>
+</p>
+
+---
+
+### 👷 Worker Dashboard
+<p align="center">
+  <img src="./screenshots/worker.jpeg" width="220"/>
+  <img src="./screenshots/accept-reject.jpeg" width="220"/>
+</p>
+
+---
+
+### ⚙️ Profile & Navigation
+<p align="center">
+  <img src="./screenshots/profile.jpeg" width="220"/>
+  <img src="./screenshots/settings.jpeg" width="220"/>
+  <img src="./screenshots/drawer.jpeg" width="220"/>
+</p>
+
+---
+
+## 🔄 Booking Flow
+
+1. Worker creates a service  
+2. User browses and books  
+3. Booking created → **Pending**  
+4. Worker accepts/rejects  
+5. User sees updated status  
+6. Both can view each other's details after acceptance  
+
+---
+
+## 🧠 Tech Stack
+
+### 📱 Frontend
+- React Native (Expo)
+- Expo Router
+- TypeScript
+- Axios
+- AsyncStorage
+- Expo Linear Gradient
+
+---
+
+### 🖥 Backend
+- Node.js
+- Express.js
+- PostgreSQL (Render Hosted)
+- JWT Authentication
+
+---
+
+### ☁️ Deployment
+- Backend → Render
+- Database → Render PostgreSQL
+- Mobile App → Expo EAS (APK)
+
+---
+
+## 🧩 Project Structure
+
 
 <pre>
 mobile-app/
- ├── app/
- │    ├── (drawer)/
- │    ├── home.tsx
- │    ├── bookings.tsx
- │    ├── worker.tsx
- │    ├── my-services.tsx
- │    ├── settings.tsx
- │    └── profile.tsx
- │
- ├── assets/
- ├── app.json
- └── .env
+├── app/
+│ ├── (drawer)/
+│ ├── home.tsx
+│ ├── bookings.tsx
+│ ├── worker.tsx
+│ ├── my-services.tsx
+│ ├── settings.tsx
+│ └── profile.tsx
+│
+├── assets/
+├── app.json
+└── .env
 
 backend/
- ├── controllers/
- ├── routes/
- ├── models/
- ├── config/
- ├── .env
- └── server.js
+├── controllers/
+├── routes/
+├── models/
+├── config/
+├── .env
+└── server.js
 </pre>
 
 <hr/>
