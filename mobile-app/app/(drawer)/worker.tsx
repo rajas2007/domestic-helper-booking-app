@@ -75,32 +75,41 @@ export default function Worker() {
 
     try {
       const booking = bookings.find(b => b.id === id);
-      if (!booking) return;
+      if (!booking) {
+        toast.error("Booking not found");
+        return;
+      }
+
+      console.log(`Updating booking ${id} to ${status}`, booking);
 
       await axios.put(
         `https://domestic-helper-booking-app.onrender.com/api/bookings/${id}`,
         { status }
       );
 
-      fetchBookings();
+      // Refresh bookings list
+      await fetchBookings();
+
+      toast.success(`Booking ${status === 'accepted' ? 'accepted' : 'rejected'} successfully!`);
 
       // Show animated booking decision modal
       if (status === "accepted") {
         showBookingDecision(
           "accepted",
-          booking.title,
-          booking.user?.name || "User",
-          booking.worker?.name || "Worker"
+          booking.title || "Service",
+          booking.user_name || "User",
+          booking.worker_name || "Worker"
         );
       } else if (status === "rejected") {
         showBookingDecision(
           "rejected",
-          booking.title,
-          booking.user?.name || "User",
-          booking.worker?.name || "Worker"
+          booking.title || "Service",
+          booking.user_name || "User",
+          booking.worker_name || "Worker"
         );
       }
     } catch (err: any) {
+      console.error("Error updating booking status:", err);
       toast.error(getErrorMessage(err));
     } finally {
       setUpdatingStatus(null);

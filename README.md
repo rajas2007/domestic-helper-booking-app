@@ -66,7 +66,7 @@ Built with a focus on real-world UX, smooth booking flow, and modern mobile desi
 <p align="center">
   <img src="./screenshots/home.jpeg" width="220"/>
   <img src="./screenshots/explore.jpeg" width="220"/>
-  <img src="./screenshots/booked-state.jpeg" width="220"/>
+  
 </p>
 
 ---
@@ -81,6 +81,7 @@ Built with a focus on real-world UX, smooth booking flow, and modern mobile desi
 
 ### 📦 Booking System
 <p align="center">
+  <img src="./screenshots/booked-state.jpeg" width="220"/>
   <img src="./screenshots/bookings.jpeg" width="220"/>
   <img src="./screenshots/accepted-status.jpeg" width="220"/>
 </p>

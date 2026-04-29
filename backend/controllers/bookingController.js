@@ -80,13 +80,13 @@ const getWorkerBookings = async (req, res) => {
     const { worker_id } = req.params;
 
     const result = await db.query(
-      `SELECT b.*, 
+      `SELECT b.*,
               s.title, s.description, s.price,
               u.name AS user_name,
               u.email AS user_email
        FROM bookings b
-       JOIN services s ON b.service_id = s.id
-       JOIN users u ON b.user_id = u.id
+       LEFT JOIN services s ON b.service_id = s.id
+       LEFT JOIN users u ON b.user_id = u.id
        WHERE b.worker_id = $1
        ORDER BY b.id DESC`,
       [worker_id]
@@ -94,7 +94,7 @@ const getWorkerBookings = async (req, res) => {
 
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
+    console.error("WORKER BOOKINGS ERROR:", err);
     res.status(500).json({ message: "Error fetching worker bookings" });
   }
 };
@@ -105,9 +105,12 @@ const updateBookingStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
+    console.log(`Updating booking ${id} to status: ${status}`);
+
     // ✅ VALIDATE STATUS
     const validStatuses = ["pending", "accepted", "rejected"];
     if (!validStatuses.includes(status)) {
+      console.log(`Invalid status: ${status}`);
       return res.status(400).json({ message: "Invalid booking status" });
     }
 
@@ -118,13 +121,16 @@ const updateBookingStatus = async (req, res) => {
     );
 
     if (existingBooking.rows.length === 0) {
+      console.log(`Booking ${id} not found`);
       return res.status(404).json({ message: "Booking not found" });
     }
 
     const oldStatus = existingBooking.rows[0].status;
+    console.log(`Booking ${id} current status: ${oldStatus}`);
 
     // Only allow status changes if not already accepted/rejected
     if (oldStatus === "accepted" || oldStatus === "rejected") {
+      console.log(`Cannot change status of booking ${id} - already ${oldStatus}`);
       return res.status(400).json({ message: "Booking status cannot be changed once accepted or rejected" });
     }
 
@@ -133,9 +139,10 @@ const updateBookingStatus = async (req, res) => {
       [status, id]
     );
 
+    console.log(`Successfully updated booking ${id} to ${status}`);
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
+    console.error("UPDATE BOOKING STATUS ERROR:", err);
     res.status(500).json({ message: "Error updating booking status" });
   }
 };
