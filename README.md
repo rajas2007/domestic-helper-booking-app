@@ -7,7 +7,7 @@ Built with a focus on real-world UX, smooth booking flow, and modern mobile desi
 
 <p align="center">
 🚀 <b>Production-ready Android APK available</b><br/>
-<a href="https://expo.dev/accounts/rajassg/projects/mobile-app/builds/0f4ef87b-56de-4242-80de-b263b292ad25">
+<a href="https://expo.dev/accounts/rajassg/projects/mobile-app/builds/6dca0a86-6e7d-4eb2-850a-54c75a671a30">
 👉 Download Latest APK
 </a>
 </p>
