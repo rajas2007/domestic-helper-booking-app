@@ -1,7 +1,7 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
+import api from "../../utils/api";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -45,8 +45,8 @@ export default function Settings() {
 
       const user = JSON.parse(userData);
 
-      const res = await axios.put(
-        "https://domestic-helper-booking-app.onrender.com/api/auth/update",
+      const res = await api.put(
+        "/api/auth/update",
         {
           id: user.id,
           name: name.trim(),
@@ -56,13 +56,15 @@ export default function Settings() {
       );
 
       // ✅ Update local storage
-      await AsyncStorage.setItem("user", JSON.stringify(res.data));
-
+      const updatedUser = res.data.user || res.data;
+      await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+      setName(updatedUser.name);
+      setEmail(updatedUser.email);
       setPassword(""); // ✅ clear password field
 
       toast.success("Profile updated successfully");
 
-    } catch (err: any) {
+    } catch {
       toast.error("Update failed");
     } finally {
       setLoading(false);

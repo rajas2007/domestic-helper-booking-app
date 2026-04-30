@@ -69,7 +69,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md' })
         ])
       ).start();
     }
-  }, [status]);
+  }, [status, scaleAnim, glowAnim]);
 
   return (
     <Animated.View

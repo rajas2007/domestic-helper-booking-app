@@ -1,13 +1,12 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useEffect, useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
+import api from "../../utils/api";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { AppTheme } from "../../constants/theme";
-import { getErrorMessage } from "../../utils/errorHandler";
 
 export default function Profile() {
   const [user, setUser] = useState<any>(null);
@@ -23,16 +22,16 @@ export default function Profile() {
     setUser(u);
 
     try {
-      const bookRes = await axios.get(
-        `https://domestic-helper-booking-app.onrender.com/api/bookings/user/${u.id}`
+      const bookRes = await api.get(
+        `/api/bookings/user/${u.id}`
       );
       setBookingCount(bookRes.data.length);
     } catch {}
 
     if (u.role === "worker") {
       try {
-        const svcRes = await axios.get(
-          `https://domestic-helper-booking-app.onrender.com/api/services/worker/${u.id}`
+        const svcRes = await api.get(
+          `/api/services/worker/${u.id}`
         );
         setServiceCount(svcRes.data.length);
       } catch {}

@@ -1,20 +1,34 @@
 const db = require("../config/db");
 const { createBooking } = require("../models/bookingModel");
+const sanitizeInput = require('../utils/sanitization');
+const logger = require('../utils/logger');
 
 // ================= BOOK SERVICE =================
 const bookService = async (req, res) => {
   try {
     const { service_id, user_id } = req.body;
+    const authenticatedUserId = req.user.id;
+
+    // ✅ SANITIZE INPUTS
+    const sanitizedData = {
+      service_id: sanitizeInput.number(service_id),
+      user_id: sanitizeInput.number(user_id)
+    };
+
+    // ✅ VERIFY OWNERSHIP - Users can only book for themselves
+    if (sanitizedData.user_id !== authenticatedUserId) {
+      return res.status(403).json({ message: "You can only book services for yourself" });
+    }
 
     // ✅ VALIDATE REQUIRED FIELDS
-    if (!service_id || !user_id) {
+    if (!sanitizedData.service_id || !sanitizedData.user_id) {
       return res.status(400).json({ message: "Service ID and User ID are required" });
     }
 
     // 🔥 Get worker_id from service
     const serviceResult = await db.query(
       "SELECT worker_id FROM services WHERE id=$1",
-      [service_id]
+      [sanitizedData.service_id]
     );
 
     if (serviceResult.rows.length === 0) {
@@ -24,14 +38,14 @@ const bookService = async (req, res) => {
     const worker_id = serviceResult.rows[0].worker_id;
 
     // ✅ PREVENT SELF-BOOKING
-    if (worker_id === user_id) {
+    if (worker_id === authenticatedUserId) {
       return res.status(400).json({ message: "You cannot book your own service" });
     }
 
     // ✅ CHECK FOR DUPLICATE BOOKING
     const existingBooking = await db.query(
       "SELECT * FROM bookings WHERE service_id=$1 AND user_id=$2 AND status=$3",
-      [service_id, user_id, "pending"]
+      [sanitizedData.service_id, authenticatedUserId, "pending"]
     );
 
     if (existingBooking.rows.length > 0) {
@@ -39,13 +53,14 @@ const bookService = async (req, res) => {
     }
 
     // 🔥 Create booking (status = pending)
-    const booking = await createBooking(service_id, user_id, worker_id);
+    const booking = await createBooking(sanitizedData.service_id, authenticatedUserId, worker_id);
 
     res.json(booking);
 
   } catch (err) {
-    console.error("BOOKING ERROR:", err);
-    res.status(500).json({ message: "Error booking service" });
+    logger.error("BOOKING ERROR:", err);
+    // ✅ SECURE ERROR RESPONSE - No sensitive information
+    res.status(500).json({ message: "Booking failed" });
   }
 };
 
@@ -53,9 +68,15 @@ const bookService = async (req, res) => {
 const getUserBookings = async (req, res) => {
   try {
     const { user_id } = req.params;
+    const authenticatedUserId = req.user.id;
+
+    // ✅ VERIFY OWNERSHIP - Users can only see their own bookings
+    if (parseInt(user_id) !== authenticatedUserId) {
+      return res.status(403).json({ message: "You can only view your own bookings" });
+    }
 
     const result = await db.query(
-      `SELECT b.*, 
+      `SELECT b.*,
               s.title, s.description, s.price,
               w.name AS worker_name,
               w.email AS worker_email
@@ -69,7 +90,7 @@ const getUserBookings = async (req, res) => {
 
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).json({ message: "Error fetching user bookings" });
   }
 };
@@ -78,6 +99,12 @@ const getUserBookings = async (req, res) => {
 const getWorkerBookings = async (req, res) => {
   try {
     const { worker_id } = req.params;
+    const authenticatedUserId = req.user.id;
+
+    // ✅ VERIFY OWNERSHIP - Workers can only see their own bookings
+    if (parseInt(worker_id) !== authenticatedUserId) {
+      return res.status(403).json({ message: "You can only view bookings for your own services" });
+    }
 
     const result = await db.query(
       `SELECT b.*,
@@ -94,103 +121,82 @@ const getWorkerBookings = async (req, res) => {
 
     res.json(result.rows);
   } catch (err) {
-    console.error("WORKER BOOKINGS ERROR:", err);
+    logger.error("WORKER BOOKINGS ERROR:", err);
     res.status(500).json({ message: "Error fetching worker bookings" });
   }
 };
 
 // ================= UPDATE STATUS =================
 const updateBookingStatus = async (req, res) => {
-  console.log("=== UPDATE BOOKING STATUS STARTED ===");
-  console.log("Headers:", req.headers);
-  console.log("Params:", req.params);
-  console.log("Body:", req.body);
-
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    console.log(`Updating booking ${id} to status: ${status}`);
+    // ✅ SANITIZE INPUTS
+    const sanitizedData = {
+      id: sanitizeInput.number(id),
+      status: sanitizeInput.textWithLimit(status, 20),
+    };
 
     // ✅ VALIDATE INPUT
-    if (!id || isNaN(parseInt(id))) {
-      console.log(`Invalid booking ID: ${id}`);
+    if (!sanitizedData.id || isNaN(sanitizedData.id)) {
       return res.status(400).json({ message: "Invalid booking ID" });
     }
 
     // ✅ VALIDATE STATUS
     const validStatuses = ["pending", "accepted", "rejected"];
-    if (!validStatuses.includes(status)) {
-      console.log(`Invalid status: ${status}`);
+    if (!validStatuses.includes(sanitizedData.status)) {
       return res.status(400).json({ message: "Invalid booking status" });
     }
 
-    // First, let's check database connection
-    console.log("Testing database connection...");
-    const testQuery = await db.query("SELECT NOW() as current_time");
-    console.log("Database connection OK:", testQuery.rows[0]);
-
     // ✅ CHECK IF BOOKING EXISTS
-    console.log(`Checking if booking ${id} exists...`);
     const existingBooking = await db.query(
       "SELECT * FROM bookings WHERE id=$1",
-      [parseInt(id)]
+      [sanitizedData.id]
     );
 
-    console.log(`Found ${existingBooking.rows.length} bookings with id ${id}`);
-
     if (existingBooking.rows.length === 0) {
-      console.log(`Booking ${id} not found`);
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    const oldStatus = existingBooking.rows[0].status;
-    console.log(`Booking ${id} current status: ${oldStatus}`);
+    const booking = existingBooking.rows[0];
+    const oldStatus = booking.status;
+
+    // ✅ VERIFY USER OWNERSHIP - Only worker can update booking status
+    if (booking.worker_id !== req.user.id) {
+      return res.status(403).json({ message: "You can only update bookings for your own services" });
+    }
 
     // Only allow status changes if not already accepted/rejected
     if (oldStatus === "accepted" || oldStatus === "rejected") {
-      console.log(`Cannot change status of booking ${id} - already ${oldStatus}`);
       return res.status(400).json({ message: "Booking status cannot be changed once accepted or rejected" });
     }
 
     // Try to update with updated_at first, fallback without it
     let result;
     try {
-      console.log("Attempting update with updated_at...");
       result = await db.query(
         "UPDATE bookings SET status=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2 RETURNING *",
-        [status, parseInt(id)]
+        [sanitizedData.status, sanitizedData.id]
       );
-      console.log("Update with updated_at successful");
     } catch (updateError) {
-      console.log("updated_at column might not exist, trying without it:", updateError.message);
-      // Fallback: update without updated_at
-      console.log("Attempting update without updated_at...");
       result = await db.query(
         "UPDATE bookings SET status=$1 WHERE id=$2 RETURNING *",
-        [status, parseInt(id)]
+        [sanitizedData.status, sanitizedData.id]
       );
-      console.log("Update without updated_at successful");
     }
 
-    console.log(`Successfully updated booking ${id} to ${status}`);
-    console.log("=== UPDATE BOOKING STATUS COMPLETED ===");
     res.json(result.rows[0]);
   } catch (err) {
-    console.error("=== UPDATE BOOKING STATUS ERROR ===");
-    console.error("Error message:", err.message);
-    console.error("Error code:", err.code);
-    console.error("Error stack:", err.stack);
-    console.error("Request details:", { params: req.params, body: req.body });
-
-    // More detailed error response
-    res.status(500).json({
-      message: "Error updating booking status",
-      error: err.message,
-      code: err.code,
-      bookingId: req.params.id,
-      requestedStatus: req.body.status
-    });
+    // ✅ SECURE ERROR RESPONSE - No sensitive information in production
+    if (process.env.NODE_ENV === 'production') {
+      res.status(500).json({ message: "Failed to update booking status" });
+    } else {
+      res.status(500).json({
+        message: "Error updating booking status",
+        error: err.message,
+      });
+    }
   }
 };
 
@@ -218,7 +224,7 @@ const getRecentStatusChanges = async (req, res) => {
     const result = await db.query(query, [parseInt(userId) || 0]);
     res.json(result.rows || []);
   } catch (err) {
-    console.error("GET RECENT STATUS CHANGES ERROR:", err);
+    logger.error("GET RECENT STATUS CHANGES ERROR:", err);
     // Return empty array instead of 500 error to prevent app crashes
     res.json([]);
   }

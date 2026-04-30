@@ -9,7 +9,7 @@ export default function Index() {
 
   useEffect(() => {
     const checkLogin = async () => {
-    const token = await AsyncStorage.getItem("token");
+      const token = await AsyncStorage.getItem("token");
 
       if (token) {
         router.replace("/(drawer)/home"); // FORCE drawer entry
@@ -17,7 +17,7 @@ export default function Index() {
     };
 
     checkLogin();
-  }, []);
+  }, [router]);
 
   return (
     <LinearGradient

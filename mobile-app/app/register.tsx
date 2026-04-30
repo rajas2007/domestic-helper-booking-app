@@ -1,7 +1,7 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import axios from "axios";
+import api from "../utils/api";
 import { LinearGradient } from "expo-linear-gradient";
 import { validateRegister, ValidationErrors } from "../utils/validators";
 import { useToast } from "../hooks/useToast";
@@ -61,8 +61,8 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await axios.post(
-        "https://domestic-helper-booking-app.onrender.com/api/auth/register",
+      await api.post(
+        "/api/auth/register",
         {
           name: name.trim(),
           email: email.trim(),
@@ -127,6 +127,8 @@ export default function Register() {
               }
             }}
             editable={!loading}
+            autoCapitalize="words"
+            autoCorrect={false}
             style={[styles.input, errors.name && styles.inputError]}
           />
           {errors.name && (
@@ -149,6 +151,8 @@ export default function Register() {
             }}
             editable={!loading}
             keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
             style={[styles.input, errors.email && styles.inputError]}
           />
           {errors.email && (
@@ -171,6 +175,8 @@ export default function Register() {
               }
             }}
             editable={!loading}
+            autoCapitalize="none"
+            autoCorrect={false}
             style={[styles.input, errors.password && styles.inputError]}
           />
           

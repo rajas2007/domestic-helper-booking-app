@@ -34,7 +34,6 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid
-      console.log('Token expired, clearing storage');
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
 

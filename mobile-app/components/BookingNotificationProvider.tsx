@@ -1,8 +1,8 @@
-import React, { createContext, useCallback, useContext, useState, useEffect } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { BookingDecisionModal, BookingDecisionType } from "./BookingDecisionModal";
 import { NotificationStorage } from "../utils/notificationStorage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
+import api from "../utils/api";
 
 interface BookingNotification {
   id: string;
@@ -41,37 +41,34 @@ export const BookingNotificationProvider: React.FC<{ children: React.ReactNode }
 }) => {
   const [notifications, setNotifications] = useState<BookingNotification[]>([]);
   const [currentNotification, setCurrentNotification] = useState<BookingNotification | null>(null);
+  const [isCheckingNotifications, setIsCheckingNotifications] = useState(false);
+  const [isModalAnimating, setIsModalAnimating] = useState(false);
 
-  // Load persistent notifications on mount
-  useEffect(() => {
-    const loadPersistentNotifications = async () => {
-      try {
-        const unshownNotifications = await NotificationStorage.getUnshownNotifications();
+  const loadPersistentNotifications = useCallback(async () => {
+    try {
+      const unshownNotifications = await NotificationStorage.getUnshownNotifications();
+      if (unshownNotifications.length === 0) return;
 
-        if (unshownNotifications.length > 0) {
-          // Convert persistent notifications to current format
-          const bookingNotifications: BookingNotification[] = unshownNotifications.map(n => ({
-            id: n.id,
-            type: n.type,
-            serviceName: n.serviceName,
-            userName: n.userName,
-            workerName: n.workerName,
-          }));
+      const bookingNotifications: BookingNotification[] = unshownNotifications.map(n => ({
+        id: n.id,
+        type: n.type,
+        serviceName: n.serviceName,
+        userName: n.userName,
+        workerName: n.workerName,
+      }));
 
-          setNotifications(bookingNotifications);
-
-          // Show first notification
-          if (bookingNotifications.length > 0) {
-            setCurrentNotification(bookingNotifications[0]);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load persistent notifications:", error);
+      setNotifications(bookingNotifications);
+      if (bookingNotifications.length > 0) {
+        setCurrentNotification(prev => prev ?? bookingNotifications[0]);
       }
-    };
-
-    loadPersistentNotifications();
+    } catch (error) {
+      console.error("Failed to load persistent notifications:", error);
+    }
   }, []);
+
+  useEffect(() => {
+    loadPersistentNotifications();
+  }, [loadPersistentNotifications]);
 
   const showBookingDecision = useCallback(
     (type: BookingDecisionType, serviceName: string, userName: string, workerName?: string) => {
@@ -83,15 +80,14 @@ export const BookingNotificationProvider: React.FC<{ children: React.ReactNode }
         workerName,
       };
 
-      // If no modal is currently showing, show it immediately
-      if (!currentNotification) {
-        setCurrentNotification(notification);
-      } else {
-        // Otherwise, queue it
+      if (isModalAnimating || currentNotification) {
         setNotifications(prev => [...prev, notification]);
+        return;
       }
+
+      setCurrentNotification(notification);
     },
-    [currentNotification]
+    [currentNotification, isModalAnimating]
   );
 
   const clearNotification = useCallback((id: string) => {
@@ -99,27 +95,25 @@ export const BookingNotificationProvider: React.FC<{ children: React.ReactNode }
   }, []);
 
   const checkMissedNotifications = useCallback(async () => {
+    if (isCheckingNotifications) return;
+    setIsCheckingNotifications(true);
+
     try {
       const userData = await AsyncStorage.getItem("user");
       if (!userData) return;
 
       const user = JSON.parse(userData);
       const lastCheck = await AsyncStorage.getItem("@last_notification_check");
-      const since = lastCheck ? parseInt(lastCheck) : Date.now() - (24 * 60 * 60 * 1000); // Last 24 hours
+      const since = lastCheck ? parseInt(lastCheck, 10) : Date.now() - 24 * 60 * 60 * 1000;
 
-      const response = await axios.get(
-        `https://domestic-helper-booking-app.onrender.com/api/bookings/status-changes/${user.id}?since=${since}`
-      );
-
+      const response = await api.get(`/api/bookings/status-changes/${user.id}?since=${since}`);
       const statusChanges = response.data;
 
-      // Create notifications for status changes
       for (const change of statusChanges) {
         const notificationType = change.status === "accepted" ? "accepted" : "rejected";
-        const userName = change.user_id === user.id ? (change.user_name || "User") : "You";
+        const userName = change.user_id === user.id ? change.user_name || "User" : "You";
         const workerName = change.worker_name || "Worker";
 
-        // Store as persistent notification
         await NotificationStorage.saveNotification({
           id: `status-change-${change.id}-${notificationType}`,
           type: notificationType,
@@ -130,52 +124,34 @@ export const BookingNotificationProvider: React.FC<{ children: React.ReactNode }
         });
       }
 
-      // Update last check time
       await AsyncStorage.setItem("@last_notification_check", Date.now().toString());
-
-      // Load and show any unshown notifications
-      const unshownNotifications = await NotificationStorage.getUnshownNotifications();
-      if (unshownNotifications.length > 0) {
-        const bookingNotifications: BookingNotification[] = unshownNotifications.map(n => ({
-          id: n.id,
-          type: n.type,
-          serviceName: n.serviceName,
-          userName: n.userName,
-          workerName: n.workerName,
-        }));
-
-        setNotifications(prev => [...prev, ...bookingNotifications]);
-
-        // Show first notification if none is currently showing
-        if (!currentNotification && bookingNotifications.length > 0) {
-          setCurrentNotification(bookingNotifications[0]);
-        }
-      }
+      await loadPersistentNotifications();
     } catch (error: any) {
-      // Handle 404 gracefully - endpoint might not be deployed yet
-      if (error?.response?.status === 404) {
-        // Silent handling - endpoint not available yet
-        return;
-      } else {
+      if (error?.response?.status !== 404) {
         console.error("Failed to check missed notifications:", error);
       }
+    } finally {
+      setIsCheckingNotifications(false);
     }
-  }, [currentNotification]);
+  }, [isCheckingNotifications, loadPersistentNotifications]);
 
-  // Global polling for new notifications
   useEffect(() => {
-    checkMissedNotifications(); // Check immediately on mount
-    
+    checkMissedNotifications();
+
     const interval = setInterval(() => {
-      checkMissedNotifications();
-    }, 15000); // Check every 15 seconds
-    
+      if (!currentNotification) {
+        checkMissedNotifications();
+      }
+    }, 30000);
+
     return () => clearInterval(interval);
-  }, [checkMissedNotifications]);
+  }, [checkMissedNotifications, currentNotification]);
 
   const handleModalClose = useCallback(async () => {
+    if (isModalAnimating) return;
+    setIsModalAnimating(true);
+
     if (currentNotification) {
-      // Mark as shown in persistent storage
       try {
         await NotificationStorage.markAsShown(currentNotification.id);
       } catch (error) {
@@ -185,16 +161,18 @@ export const BookingNotificationProvider: React.FC<{ children: React.ReactNode }
 
     setCurrentNotification(null);
 
-    // Show next notification in queue if any
-    setNotifications(prev => {
-      if (prev.length > 0) {
-        const nextNotification = prev[0];
-        setCurrentNotification(nextNotification);
-        return prev.slice(1);
-      }
-      return prev;
-    });
-  }, [currentNotification]);
+    setTimeout(() => {
+      setNotifications(prev => {
+        if (prev.length > 0) {
+          const [nextNotification, ...rest] = prev;
+          setCurrentNotification(nextNotification);
+          return rest;
+        }
+        return prev;
+      });
+      setIsModalAnimating(false);
+    }, 300);
+  }, [currentNotification, isModalAnimating]);
 
   return (
     <BookingNotificationContext.Provider
@@ -206,16 +184,17 @@ export const BookingNotificationProvider: React.FC<{ children: React.ReactNode }
       }}
     >
       {children}
-      {currentNotification && (
+      {currentNotification && !isModalAnimating ? (
         <BookingDecisionModal
-          visible={true}
+          key={`modal-${currentNotification.id}-${Date.now()}`}
+          visible={!!currentNotification && !isModalAnimating}
           type={currentNotification.type}
           serviceName={currentNotification.serviceName}
           userName={currentNotification.userName}
           workerName={currentNotification.workerName}
           onClose={handleModalClose}
         />
-      )}
+      ) : null}
     </BookingNotificationContext.Provider>
   );
 };

@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { verifyToken, verifyRole } = require('../middleware/authMiddleware');
 
 const {
   addService,
@@ -10,10 +11,10 @@ const {
 } = require("../controllers/serviceController");
 
 // routes
-router.post("/", addService);
-router.get("/", fetchServices);
-router.get("/worker/:id", getWorkerServices); 
-router.put("/:id", updateService);
-router.delete("/:id", deleteService);
+router.post("/", verifyToken, verifyRole(['worker']), addService);
+router.get("/", verifyToken, fetchServices); // Public services view
+router.get("/worker/:id", verifyToken, getWorkerServices);
+router.put("/:id", verifyToken, verifyRole(['worker']), updateService);
+router.delete("/:id", verifyToken, verifyRole(['worker']), deleteService);
 
 module.exports = router;

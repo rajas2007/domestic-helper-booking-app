@@ -44,7 +44,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         }),
       ])
     ).start();
-  }, []);
+  }, [bounceAnim, fadeAnim]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>

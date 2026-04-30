@@ -1,8 +1,8 @@
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useCallback, useEffect, useState } from "react";
+import api from "../../utils/api";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useToast } from "../../hooks/useToast";
@@ -36,31 +36,31 @@ export default function Worker() {
   const toast = useToast();
   const { showBookingDecision } = useBookingNotification();
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       const userData = await AsyncStorage.getItem("user");
       if (!userData) return;
 
       const user = JSON.parse(userData);
 
-      const res = await axios.get(
-        `https://domestic-helper-booking-app.onrender.com/api/bookings/worker/${user.id}`
+      const res = await api.get(
+        `/api/bookings/worker/${user.id}`
       );
 
       setBookings(res.data);
     } catch (err: any) {
       toast.error(getErrorMessage(err));
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [fetchBookings]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", fetchBookings);
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, fetchBookings]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -80,10 +80,8 @@ export default function Worker() {
         return;
       }
 
-      console.log(`Updating booking ${id} to ${status}`, booking);
-
-      await axios.put(
-        `https://domestic-helper-booking-app.onrender.com/api/bookings/${id}`,
+      await api.put(
+        `/api/bookings/${id}`,
         { status }
       );
 

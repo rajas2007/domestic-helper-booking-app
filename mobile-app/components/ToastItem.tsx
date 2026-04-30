@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Animated, View, Text, StyleSheet, Dimensions } from "react-native";
+import { Animated, View, Text, StyleSheet } from "react-native";
 
 export type ToastType = "success" | "error" | "warning";
 
@@ -9,8 +9,6 @@ export interface Toast {
   message: string;
   duration?: number;
 }
-
-const { height } = Dimensions.get("window");
 
 interface ToastItemProps {
   toast: Toast;

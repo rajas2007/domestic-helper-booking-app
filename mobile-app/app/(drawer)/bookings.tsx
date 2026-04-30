@@ -2,7 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from "react-native";
 import { useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useToast } from "../../hooks/useToast";
@@ -54,8 +54,8 @@ export default function MyBookings() {
 
       const user = JSON.parse(userData);
 
-      const res = await axios.get(
-        `https://domestic-helper-booking-app.onrender.com/api/bookings/user/${user.id}`
+      const res = await api.get(
+        `/api/bookings/user/${user.id}`
       );
 
       const newBookings = res.data;

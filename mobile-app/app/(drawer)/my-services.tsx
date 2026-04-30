@@ -1,7 +1,7 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from "react-native";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
+import api from "../../utils/api";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -40,16 +40,16 @@ export default function MyServices() {
   });
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const fetchServices = async () => {
+  const fetchServices = useCallback(async () => {
     try {
       setFetching(true);
       const userData = await AsyncStorage.getItem("user");
       const user = JSON.parse(userData || "{}");
-      const res = await axios.get(`https://domestic-helper-booking-app.onrender.com/api/services/worker/${user.id}`);
+      const res = await api.get(`/api/services/worker/${user.id}`);
       setServices(res.data);
     } catch (err: any) { toast.error(getErrorMessage(err)); }
     finally { setFetching(false); }
-  };
+  }, [toast]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -66,7 +66,7 @@ export default function MyServices() {
     try {
       const userData = await AsyncStorage.getItem("user");
       const user = JSON.parse(userData || "{}");
-      await axios.post("https://domestic-helper-booking-app.onrender.com/api/services", {
+      await api.post("/api/services", {
         title, description, price: Number(price), worker_id: user.id,
       });
       setTitle(""); setDescription(""); setPrice("");
@@ -98,7 +98,7 @@ export default function MyServices() {
     if (validationErrors) { setEditErrors(validationErrors); return; }
     setEditLoading(true);
     try {
-      await axios.put(`https://domestic-helper-booking-app.onrender.com/api/services/${editingId}`, {
+      await api.put(`/api/services/${editingId}`, {
         title: editTitle, description: editDescription, price: Number(editPrice),
       });
       toast.success("Service updated!");
@@ -117,7 +117,7 @@ export default function MyServices() {
     if (!deleteModal.serviceId) return;
     setDeleteLoading(true);
     try {
-      await axios.delete(`https://domestic-helper-booking-app.onrender.com/api/services/${deleteModal.serviceId}`);
+      await api.delete(`/api/services/${deleteModal.serviceId}`);
       toast.success("Service deleted");
       setDeleteModal({ visible: false, serviceId: null, serviceName: "" });
       fetchServices();
@@ -125,11 +125,11 @@ export default function MyServices() {
     finally { setDeleteLoading(false); }
   };
 
-  useEffect(() => { fetchServices(); }, []);
+  useEffect(() => { fetchServices(); }, [fetchServices]);
   useEffect(() => {
     const unsub = navigation.addListener("focus", fetchServices);
     return unsub;
-  }, [navigation]);
+  }, [navigation, fetchServices]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: AppTheme.background }}>

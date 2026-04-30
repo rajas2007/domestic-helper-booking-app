@@ -13,6 +13,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { AnimatedPressable } from "../../components/AnimatedPressable";
 import { AppTheme, SERVICE_CATEGORIES, ServiceCategoryId } from "../../constants/theme";
 import api from "../../utils/api";
+import { useBookingNotification } from "../../components/BookingNotificationProvider";
 
 export default function HomeScreen() {
   const navigation: any = useNavigation();
@@ -23,6 +24,7 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategoryId>("all");
   const toast = useToast();
+  const { showBookingDecision } = useBookingNotification();
 
   const fetchServices = useCallback(async () => {
     try {
@@ -102,6 +104,13 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.openDrawer()}><Text style={styles.menu}>☰</Text></TouchableOpacity>
           <Text style={styles.title}>Explore</Text>
+          {/* Test button for modal */}
+          <TouchableOpacity 
+            onPress={() => showBookingDecision("accepted", "Test Service", "Test User", "Test Worker")}
+            style={styles.testButton}
+          >
+            <Text style={styles.testButtonText}>Test Modal</Text>
+          </TouchableOpacity>
         </View>
 
         {/* SEARCH */}
@@ -178,7 +187,9 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
   menu: { fontSize: 26, color: "#fff", marginRight: 10 },
-  title: { fontSize: 28, color: "#fff", fontWeight: "700" },
+  title: { fontSize: 28, color: "#fff", fontWeight: "700", flex: 1 },
+  testButton: { backgroundColor: AppTheme.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  testButtonText: { color: "#fff", fontSize: 12, fontWeight: "600" },
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: AppTheme.card, borderRadius: 14, borderWidth: 1, borderColor: AppTheme.cardBorder, paddingHorizontal: 14, marginBottom: 14, height: 48 },
   searchIcon: { fontSize: 16, marginRight: 10 },
   searchInput: { flex: 1, color: AppTheme.textPrimary, fontSize: 15, height: '100%' as any },

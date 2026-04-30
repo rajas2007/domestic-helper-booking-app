@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 export type BookingDecisionType = "accepted" | "rejected";
 
@@ -34,6 +34,15 @@ export const BookingDecisionModal: React.FC<BookingDecisionModalProps> = ({
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const iconScaleAnim = useRef(new Animated.Value(0)).current;
+
+  // Cleanup animations on unmount
+  useEffect(() => {
+    return () => {
+      scaleAnim.stopAnimation();
+      opacityAnim.stopAnimation();
+      iconScaleAnim.stopAnimation();
+    };
+  }, [scaleAnim, opacityAnim, iconScaleAnim]);
 
   useEffect(() => {
     if (visible) {
@@ -66,10 +75,18 @@ export const BookingDecisionModal: React.FC<BookingDecisionModalProps> = ({
           useNativeDriver: true,
         }).start();
       }, 200);
+    } else {
+      // Reset animations when not visible
+      scaleAnim.setValue(0);
+      opacityAnim.setValue(0);
+      iconScaleAnim.setValue(0);
     }
-  }, [visible]);
+  }, [visible, scaleAnim, opacityAnim, iconScaleAnim]);
 
   const handleClose = () => {
+    // Prevent multiple close calls
+    if (!visible) return;
+
     // Exit animation
     Animated.parallel([
       Animated.timing(scaleAnim, {
@@ -82,7 +99,16 @@ export const BookingDecisionModal: React.FC<BookingDecisionModalProps> = ({
         duration: 200,
         useNativeDriver: true,
       }),
+      Animated.timing(iconScaleAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
     ]).start(() => {
+      // Ensure all animations are reset before calling onClose
+      scaleAnim.setValue(0);
+      opacityAnim.setValue(0);
+      iconScaleAnim.setValue(0);
       onClose();
     });
   };
