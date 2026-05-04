@@ -13,6 +13,8 @@ const register = async (req, res) => {
     const { name, email, password } = req.body;
     const role = req.body.role || "user";
 
+    logger.info(`Registration attempt: name=${name}, email=${email}, role=${role}`);
+
     // ✅ SANITIZE INPUTS
     const sanitizedData = {
       name: sanitizeInput.textWithLimit(name, 255),
@@ -21,9 +23,12 @@ const register = async (req, res) => {
       role
     };
 
+    logger.info(`Sanitized data: name=${sanitizedData.name}, email=${sanitizedData.email}`);
+
     // ✅ VALIDATE INPUT
     const validationErrors = validateRegister(sanitizedData);
     if (validationErrors) {
+      logger.info(`Validation errors: ${JSON.stringify(validationErrors)}`);
       return res.status(400).json({ message: "Validation error", errors: validationErrors });
     }
 

@@ -10,7 +10,9 @@ const sanitizeInput = {
 
   // Email sanitization (basic)
   email: (email) => {
-    if (typeof email !== 'string') return email;
+    if (typeof email !== 'string' || email === null || email === undefined) {
+      return '';
+    }
     return email.trim().toLowerCase();
   },
 
@@ -28,7 +30,9 @@ const sanitizeInput = {
 
   // Length-limited text
   textWithLimit: (input, maxLength = 255) => {
-    if (typeof input !== 'string') return input;
+    if (typeof input !== 'string' || input === null || input === undefined) {
+      return '';
+    }
     return xss(input.trim()).substring(0, maxLength);
   },
 

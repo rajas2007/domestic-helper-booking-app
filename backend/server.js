@@ -16,6 +16,20 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' })); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+
+// CORS middleware
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-production-domain.com'] // Replace with your actual domain
+    : ['http://localhost:3000', 'http://localhost:8081', 'exp://localhost:8081'], // Allow Expo dev server
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 // Security middleware
 app.use(helmet()); // Security headers
 
