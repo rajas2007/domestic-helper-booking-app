@@ -51,7 +51,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use(limiter); // Apply to all routes
+// app.use(limiter); // Apply to all routes
 app.use('/api/auth/login', authLimiter); // Stricter limit for login
 
 // Request logging
