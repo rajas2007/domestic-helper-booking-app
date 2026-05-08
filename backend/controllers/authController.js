@@ -1,3 +1,4 @@
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const db = require("../config/db");
 const { createUser, findUserByEmail } = require("../models/userModel");
@@ -16,7 +17,10 @@ const register = async (req, res) => {
       });
     }
 
-    const user = await createUser(name, email, password, role);
+    // Hash password before storing
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await createUser(name, email, hashedPassword, role);
 
     res.status(201).json({
       message: "User registered successfully",
@@ -45,8 +49,14 @@ const login = async (req, res) => {
       });
     }
 
-    // Plain text password match
-    const isMatch = password === user.password;
+    // Check if stored password is a bcrypt hash (starts with $2b$ or $2a$)
+    let isMatch;
+    if (user.password && user.password.startsWith('$2')) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      // Fallback for legacy plain text passwords
+      isMatch = password === user.password;
+    }
 
     if (!isMatch) {
       return res.status(400).json({
@@ -92,6 +102,8 @@ const updateUser = async (req, res) => {
     let values;
 
     if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+
       query = `
         UPDATE users
         SET name=$1, email=$2, password=$3
@@ -99,7 +111,7 @@ const updateUser = async (req, res) => {
         RETURNING id, name, email, role
       `;
 
-      values = [name, email, password, userId];
+      values = [name, email, hashedPassword, userId];
 
     } else {
       query = `
