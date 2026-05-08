@@ -77,10 +77,12 @@ export default function Register() {
       }, 1500);
 
     } catch (err: any) {
-      const errorMsg = err?.response?.data?.message || "Registration failed";
-      if (err?.response?.data?.errors) {
+      if (!err?.response) {
+        toast.error("Server is waking up, please wait and try again");
+      } else if (err?.response?.data?.errors) {
         setErrors(err.response.data.errors);
       } else {
+        const errorMsg = err?.response?.data?.message || "Registration failed";
         toast.error(errorMsg);
       }
     } finally {

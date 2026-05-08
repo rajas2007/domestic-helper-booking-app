@@ -56,10 +56,13 @@ export default function Login() {
       router.replace("/(drawer)/home");
 
     } catch (err: any) {
-      const errorMsg = err?.response?.data?.message || "Login failed";
-      if (err?.response?.data?.errors) {
+      if (!err?.response) {
+        // Network error or timeout (e.g., Render server sleeping)
+        toast.error("Server is waking up, please wait and try again");
+      } else if (err?.response?.data?.errors) {
         setErrors(err.response.data.errors);
       } else {
+        const errorMsg = err?.response?.data?.message || "Login failed";
         toast.error(errorMsg);
       }
     } finally {
