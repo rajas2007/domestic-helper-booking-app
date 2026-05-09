@@ -7,7 +7,7 @@ Built with a focus on real-world UX, smooth booking flow, and modern mobile desi
 
 <p align="center">
 🚀 <b>Production-ready Android APK available</b><br/>
-<a href="https://expo.dev/accounts/rajassg/projects/mobile-app/builds/6dca0a86-6e7d-4eb2-850a-54c75a671a30">
+<a href="https://expo.dev/accounts/rajassg/projects/mobile-app/builds/283e4b80-71e7-447b-b9ce-3d30a8434c1b">
 👉 Download Latest APK
 </a>
 </p>
@@ -65,7 +65,7 @@ Built with a focus on real-world UX, smooth booking flow, and modern mobile desi
 ### 🏠 Home & Explore
 <p align="center">
   <img src="./screenshots/home.jpeg" width="220"/>
-  <img src="./screenshots/explore.jpeg" width="220"/>
+  <img src="./screenshots/explore.jpg" width="220"/>
   
 </p>
 
@@ -74,33 +74,33 @@ Built with a focus on real-world UX, smooth booking flow, and modern mobile desi
 ### 🔐 Authentication
 <p align="center">
   <img src="./screenshots/login.jpeg" width="220"/>
-  <img src="./screenshots/register.jpeg" width="220"/>
+  <img src="./screenshots/register.jpg" width="220"/>
 </p>
 
 ---
 
 ### 📦 Booking System
 <p align="center">
-  <img src="./screenshots/booked-state.jpeg" width="220"/>
-  <img src="./screenshots/bookings.jpeg" width="220"/>
-  <img src="./screenshots/accepted-status.jpeg" width="220"/>
+  <img src="./screenshots/booked-state.jpg" width="220"/>
+  <img src="./screenshots/bookings.jpg" width="220"/>
+  <img src="./screenshots/accepted-status.jpg" width="220"/>
 </p>
 
 ---
 
 ### 👷 Worker Dashboard
 <p align="center">
-  <img src="./screenshots/worker.jpeg" width="220"/>
-  <img src="./screenshots/accept-reject.jpeg" width="220"/>
+  <img src="./screenshots/worker.jpg" width="220"/>
+  <img src="./screenshots/accept-reject.jpg" width="220"/>
 </p>
 
 ---
 
 ### ⚙️ Profile & Navigation
 <p align="center">
-  <img src="./screenshots/profile.jpeg" width="220"/>
-  <img src="./screenshots/settings.jpeg" width="220"/>
-  <img src="./screenshots/drawer.jpeg" width="220"/>
+  <img src="./screenshots/profile.jpg" width="220"/>
+  <img src="./screenshots/settings.jpg" width="220"/>
+  <img src="./screenshots/drawer.jpg" width="220"/>
 </p>
 
 ---
