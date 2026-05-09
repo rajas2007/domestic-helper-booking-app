@@ -1,13 +1,19 @@
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  RefreshControl,
+} from "react-native";
 import { useEffect, useState, useCallback } from "react";
 import api from "../../utils/api";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useToast } from "../../hooks/useToast";
 import { getErrorMessage } from "../../utils/errorHandler";
-import { useBookingNotification } from "../../components/BookingNotificationProvider";
 import { StatusBadge } from "../../components/StatusBadge";
 import { EmptyState } from "../../components/EmptyState";
 import { AnimatedPressable } from "../../components/AnimatedPressable";
@@ -15,41 +21,17 @@ import { AppTheme } from "../../constants/theme";
 
 export default function MyBookings() {
   const navigation: any = useNavigation();
+
   const [bookings, setBookings] = useState<any[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [previousBookings, setPreviousBookings] = useState<any[]>([]);
+
   const toast = useToast();
-  const { showBookingDecision } = useBookingNotification();
-
-  const checkForStatusChanges = useCallback((oldBookings: any[], newBookings: any[]) => {
-    newBookings.forEach(newBooking => {
-      const oldBooking = oldBookings.find(b => b.id === newBooking.id);
-
-      if (oldBooking && oldBooking.status !== newBooking.status) {
-        // Status changed
-        if (newBooking.status === "accepted") {
-          showBookingDecision(
-            "accepted",
-            newBooking.title,
-            newBooking.user?.name || "You",
-            newBooking.worker?.name || "Worker"
-          );
-        } else if (newBooking.status === "rejected") {
-          showBookingDecision(
-            "rejected",
-            newBooking.title,
-            newBooking.user?.name || "You",
-            newBooking.worker?.name || "Worker"
-          );
-        }
-      }
-    });
-  }, [showBookingDecision]);
 
   const fetchBookings = useCallback(async () => {
     try {
       const userData = await AsyncStorage.getItem("user");
+
       if (!userData) return;
 
       const user = JSON.parse(userData);
@@ -58,65 +40,79 @@ export default function MyBookings() {
         `/api/bookings/user/${user.id}`
       );
 
-      const newBookings = res.data;
+      setBookings(res.data);
 
-      // Check for status changes and show notifications
-      checkForStatusChanges(previousBookings, newBookings);
-
-      setBookings(newBookings);
-      setPreviousBookings(newBookings);
     } catch (err: any) {
       toast.error(getErrorMessage(err));
     }
-  }, [previousBookings, toast, checkForStatusChanges]);
+  }, [toast]);
 
   useEffect(() => {
     fetchBookings();
   }, [fetchBookings]);
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", fetchBookings);
+    const unsubscribe = navigation.addListener(
+      "focus",
+      fetchBookings
+    );
+
     return unsubscribe;
   }, [navigation, fetchBookings]);
 
-  // Real-time polling for booking status updates
+  // Poll booking updates every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       fetchBookings();
-    }, 30000); // Check every 30 seconds
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [fetchBookings]);
 
   const onRefresh = async () => {
     setRefreshing(true);
+
     await fetchBookings();
+
     setRefreshing(false);
   };
 
   const toggleDropdown = (id: number) => {
-    setExpandedId(prev => (prev === id ? null : id));
+    setExpandedId((prev) =>
+      prev === id ? null : id
+    );
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: AppTheme.background }}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: AppTheme.background,
+      }}
+    >
       <LinearGradient
         colors={AppTheme.gradientBackground}
         style={{ flex: 1, padding: 20 }}
       >
         {/* HEADER */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.openDrawer()}>
+          <TouchableOpacity
+            onPress={() => navigation.openDrawer()}
+          >
             <Text style={styles.menu}>☰</Text>
           </TouchableOpacity>
 
-          <Text style={styles.title}>My Bookings</Text>
+          <Text style={styles.title}>
+            My Bookings
+          </Text>
         </View>
 
         {/* LIST */}
         <FlatList
           data={bookings}
-          keyExtractor={(item: any) => item.id.toString()}
+          keyExtractor={(item: any) =>
+            item.id.toString()
+          }
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -133,57 +129,124 @@ export default function MyBookings() {
             />
           }
           renderItem={({ item }: any) => {
-            const isExpanded = expandedId === item.id;
+            const isExpanded =
+              expandedId === item.id;
 
             return (
-              <AnimatedPressable style={styles.card}>
-
+              <AnimatedPressable
+                style={styles.card}
+              >
                 {/* TITLE */}
-                <Text style={styles.service}>{item.title}</Text>
+                <Text style={styles.service}>
+                  {item.title}
+                </Text>
 
                 {/* DESCRIPTION */}
-                <Text style={styles.description}>{item.description}</Text>
+                <Text style={styles.description}>
+                  {item.description}
+                </Text>
 
                 {/* PRICE */}
-                <Text style={styles.price}>₹ {item.price}</Text>
+                <Text style={styles.price}>
+                  ₹ {item.price}
+                </Text>
 
-                {/* STATUS BADGE */}
+                {/* STATUS */}
                 <StatusBadge status={item.status} />
 
-                {/* DROPDOWN (ONLY WHEN ACCEPTED) */}
+                {/* DETAILS */}
                 {item.status === "accepted" && (
                   <>
-                    <TouchableOpacity onPress={() => toggleDropdown(item.id)}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        toggleDropdown(item.id)
+                      }
+                    >
                       <Text style={styles.detailsLink}>
-                        {isExpanded ? "Hide Details ▲" : "View Details ▼"}
+                        {isExpanded
+                          ? "Hide Details ▲"
+                          : "View Details ▼"}
                       </Text>
                     </TouchableOpacity>
 
                     {isExpanded && (
-                      <View style={styles.detailsContainer}>
-                        <View style={styles.detailRow}>
-                          <View style={styles.detailAvatar}>
-                            <Text style={styles.detailAvatarText}>
-                              {item.worker_name?.charAt(0)?.toUpperCase() || "W"}
+                      <View
+                        style={
+                          styles.detailsContainer
+                        }
+                      >
+                        <View
+                          style={styles.detailRow}
+                        >
+                          <View
+                            style={
+                              styles.detailAvatar
+                            }
+                          >
+                            <Text
+                              style={
+                                styles.detailAvatarText
+                              }
+                            >
+                              {item.worker_name
+                                ?.charAt(0)
+                                ?.toUpperCase() ||
+                                "W"}
                             </Text>
                           </View>
+
                           <View>
-                            <Text style={styles.detailLabel}>Worker</Text>
-                            <Text style={styles.detailValue}>{item.worker_name}</Text>
+                            <Text
+                              style={
+                                styles.detailLabel
+                              }
+                            >
+                              Worker
+                            </Text>
+
+                            <Text
+                              style={
+                                styles.detailValue
+                              }
+                            >
+                              {item.worker_name}
+                            </Text>
                           </View>
                         </View>
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailIcon}>✉️</Text>
+
+                        <View
+                          style={styles.detailRow}
+                        >
+                          <Text
+                            style={
+                              styles.detailIcon
+                            }
+                          >
+                            ✉️
+                          </Text>
+
                           <View>
-                            <Text style={styles.detailLabel}>Email</Text>
-                            <Text style={styles.detailValue}>{item.worker_email}</Text>
+                            <Text
+                              style={
+                                styles.detailLabel
+                              }
+                            >
+                              Email
+                            </Text>
+
+                            <Text
+                              style={
+                                styles.detailValue
+                              }
+                            >
+                              {item.worker_email}
+                            </Text>
                           </View>
                         </View>
                       </View>
                     )}
                   </>
                 )}
-
               </AnimatedPressable>
             );
           }}
@@ -241,20 +304,20 @@ const styles = StyleSheet.create({
   detailsLink: {
     color: AppTheme.primary,
     marginTop: 12,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 
   detailsContainer: {
     marginTop: 12,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: 12,
     padding: 14,
     gap: 12,
   },
 
   detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
 
@@ -263,33 +326,33 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     backgroundColor: AppTheme.primaryGlow,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.3)',
+    borderColor: "rgba(59, 130, 246, 0.3)",
   },
 
   detailAvatarText: {
     color: AppTheme.primary,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 16,
   },
 
   detailIcon: {
     fontSize: 20,
     width: 36,
-    textAlign: 'center',
+    textAlign: "center",
   },
 
   detailLabel: {
     color: AppTheme.textMuted,
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 
   detailValue: {
     color: AppTheme.textHighlight,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });

@@ -4,6 +4,9 @@
       "eas": {
         "projectId": "387e3ad8-936b-4f1b-b7b5-a5809dafde51"
       }
+    },
+    "android": {
+      "package": "com.rajassg.domestichelperbookingapp"
     }
   }
 }

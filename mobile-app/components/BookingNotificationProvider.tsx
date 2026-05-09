@@ -1,6 +1,17 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { BookingDecisionModal, BookingDecisionType } from "./BookingDecisionModal";
-import { NotificationStorage } from "../utils/notificationStorage";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  BookingDecisionModal,
+  BookingDecisionType,
+} from "./BookingDecisionModal";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../utils/api";
 
@@ -19,182 +30,264 @@ interface BookingNotificationContextType {
     userName: string,
     workerName?: string
   ) => void;
+
   checkMissedNotifications: () => Promise<void>;
-  notifications: BookingNotification[];
-  clearNotification: (id: string) => void;
 }
 
-const BookingNotificationContext = createContext<BookingNotificationContextType | undefined>(
-  undefined
-);
+const BookingNotificationContext =
+  createContext<
+    BookingNotificationContextType | undefined
+  >(undefined);
 
 export const useBookingNotification = () => {
-  const context = useContext(BookingNotificationContext);
+  const context = useContext(
+    BookingNotificationContext
+  );
+
   if (!context) {
-    throw new Error("useBookingNotification must be used within BookingNotificationProvider");
+    throw new Error(
+      "useBookingNotification must be used within BookingNotificationProvider"
+    );
   }
+
   return context;
 };
 
-export const BookingNotificationProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [notifications, setNotifications] = useState<BookingNotification[]>([]);
-  const [currentNotification, setCurrentNotification] = useState<BookingNotification | null>(null);
-  const [isCheckingNotifications, setIsCheckingNotifications] = useState(false);
-  const [isModalAnimating, setIsModalAnimating] = useState(false);
+export const BookingNotificationProvider: React.FC<{
+  children: React.ReactNode;
+}> = ({ children }) => {
 
-  const loadPersistentNotifications = useCallback(async () => {
-    try {
-      const unshownNotifications = await NotificationStorage.getUnshownNotifications();
-      if (unshownNotifications.length === 0) return;
+  const [currentNotification, setCurrentNotification] =
+    useState<BookingNotification | null>(null);
 
-      const bookingNotifications: BookingNotification[] = unshownNotifications.map(n => ({
-        id: n.id,
-        type: n.type,
-        serviceName: n.serviceName,
-        userName: n.userName,
-        workerName: n.workerName,
-      }));
+  const [isModalVisible, setIsModalVisible] =
+    useState(false);
 
-      setNotifications(bookingNotifications);
-      if (bookingNotifications.length > 0) {
-        setCurrentNotification(prev => prev ?? bookingNotifications[0]);
-      }
-    } catch (error) {
-      console.error("Failed to load persistent notifications:", error);
-    }
-  }, []);
+  const shownNotificationsRef =
+    useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    loadPersistentNotifications();
-  }, [loadPersistentNotifications]);
+  const pollingRef = useRef<any>(null);
 
   const showBookingDecision = useCallback(
-    (type: BookingDecisionType, serviceName: string, userName: string, workerName?: string) => {
-      const notification: BookingNotification = {
-        id: `booking-${Date.now()}-${Math.random()}`,
-        type,
-        serviceName,
-        userName,
-        workerName,
-      };
+    (
+      type: BookingDecisionType,
+      serviceName: string,
+      userName: string,
+      workerName?: string
+    ) => {
 
-      if (isModalAnimating || currentNotification) {
-        setNotifications(prev => [...prev, notification]);
+      const id =
+        `${type}-${serviceName}-${Date.now()}`;
+
+      // Prevent duplicate popup spam
+      if (
+        shownNotificationsRef.current.has(id)
+      ) {
         return;
       }
 
-      setCurrentNotification(notification);
-    },
-    [currentNotification, isModalAnimating]
-  );
+      shownNotificationsRef.current.add(id);
 
-  const clearNotification = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  }, []);
+      if (!isModalVisible && !currentNotification) {
 
-  const checkMissedNotifications = useCallback(async () => {
-    if (isCheckingNotifications) return;
-    setIsCheckingNotifications(true);
-
-    try {
-      const userData = await AsyncStorage.getItem("user");
-      if (!userData) return;
-
-      const user = JSON.parse(userData);
-      const lastCheck = await AsyncStorage.getItem("@last_notification_check");
-      const since = lastCheck ? parseInt(lastCheck, 10) : Date.now() - 24 * 60 * 60 * 1000;
-
-      const response = await api.get(`/api/bookings/status-changes/${user.id}?since=${since}`);
-      const statusChanges = response.data;
-
-      for (const change of statusChanges) {
-        const notificationType = change.status === "accepted" ? "accepted" : "rejected";
-        const userName = change.user_id === user.id ? change.user_name || "User" : "You";
-        const workerName = change.worker_name || "Worker";
-
-        await NotificationStorage.saveNotification({
-          id: `status-change-${change.id}-${notificationType}`,
-          type: notificationType,
-          serviceName: change.service_title || "Service",
+        setCurrentNotification({
+          id,
+          type,
+          serviceName,
           userName,
           workerName,
-          timestamp: change.updated_at ? new Date(change.updated_at).getTime() : Date.now(),
         });
+
+        setTimeout(() => {
+          setIsModalVisible(true);
+        }, 100);
       }
 
-      await AsyncStorage.setItem("@last_notification_check", Date.now().toString());
-      await loadPersistentNotifications();
-    } catch (error: any) {
-      if (error?.response?.status !== 404) {
-        console.error("Failed to check missed notifications:", error);
+    },
+    [isModalVisible, currentNotification]
+  );
+
+  const checkMissedNotifications =
+    useCallback(async () => {
+
+      try {
+
+        const userData =
+          await AsyncStorage.getItem("user");
+
+        // Stop completely if logged out
+        if (!userData) {
+          return;
+        }
+
+        const user = JSON.parse(userData);
+
+        const lastCheck =
+          await AsyncStorage.getItem(
+            "@last_notification_check"
+          );
+
+        const since = lastCheck
+          ? parseInt(lastCheck, 10)
+          : Date.now() -
+            24 * 60 * 60 * 1000;
+
+        const response = await api.get(
+          `/api/bookings/status-changes/${user.id}?since=${since}`
+        );
+
+        const changes = response.data || [];
+
+        for (const change of changes) {
+
+          const notificationType =
+            change.status === "accepted"
+              ? "accepted"
+              : "rejected";
+
+          const uniqueId =
+            `${change.id}-${notificationType}`;
+
+          // Prevent duplicates forever
+          if (
+            shownNotificationsRef.current.has(
+              uniqueId
+            )
+          ) {
+            continue;
+          }
+
+          shownNotificationsRef.current.add(
+            uniqueId
+          );
+
+          // Prevent double modal opening
+          if (
+            !isModalVisible &&
+            !currentNotification
+          ) {
+
+            setCurrentNotification({
+              id: uniqueId,
+              type: notificationType,
+              serviceName:
+                change.service_title ||
+                "Service",
+              userName:
+                change.user_name || "User",
+              workerName:
+                change.worker_name ||
+                "Worker",
+            });
+
+            setTimeout(() => {
+              setIsModalVisible(true);
+            }, 100);
+
+          }
+
+          break;
+        }
+
+        await AsyncStorage.setItem(
+          "@last_notification_check",
+          Date.now().toString()
+        );
+
+      } catch (error: any) {
+
+        if (
+          error?.response?.status !== 404
+        ) {
+          console.error(
+            "Notification check failed:",
+            error
+          );
+        }
       }
-    } finally {
-      setIsCheckingNotifications(false);
-    }
-  }, [isCheckingNotifications, loadPersistentNotifications]);
+
+    }, [
+      isModalVisible,
+      currentNotification,
+    ]);
 
   useEffect(() => {
-    checkMissedNotifications();
 
-    const interval = setInterval(() => {
-      if (!currentNotification) {
-        checkMissedNotifications();
+    const initialize = async () => {
+
+      const userData =
+        await AsyncStorage.getItem("user");
+
+      // Never start polling while logged out
+      if (!userData) {
+        return;
       }
-    }, 30000);
 
-    return () => clearInterval(interval);
-  }, [checkMissedNotifications, currentNotification]);
+      await checkMissedNotifications();
 
-  const handleModalClose = useCallback(async () => {
-    if (isModalAnimating) return;
-    setIsModalAnimating(true);
+      pollingRef.current = setInterval(
+        () => {
 
-    if (currentNotification) {
-      try {
-        await NotificationStorage.markAsShown(currentNotification.id);
-      } catch (error) {
-        console.error("Failed to mark notification as shown:", error);
+          if (
+            !isModalVisible &&
+            !currentNotification
+          ) {
+            checkMissedNotifications();
+          }
+
+        },
+        30000
+      );
+    };
+
+    initialize();
+
+    return () => {
+
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
       }
-    }
+    };
 
-    setCurrentNotification(null);
+  }, [checkMissedNotifications]);
+
+  const handleModalClose = useCallback(() => {
+
+    setIsModalVisible(false);
 
     setTimeout(() => {
-      setNotifications(prev => {
-        if (prev.length > 0) {
-          const [nextNotification, ...rest] = prev;
-          setCurrentNotification(nextNotification);
-          return rest;
-        }
-        return prev;
-      });
-      setIsModalAnimating(false);
-    }, 300);
-  }, [currentNotification, isModalAnimating]);
+      setCurrentNotification(null);
+    }, 200);
+
+  }, []);
 
   return (
     <BookingNotificationContext.Provider
       value={{
         showBookingDecision,
         checkMissedNotifications,
-        notifications,
-        clearNotification,
       }}
     >
       {children}
-      {currentNotification && !isModalAnimating ? (
+
+      {currentNotification && (
         <BookingDecisionModal
-          key={`modal-${currentNotification.id}-${Date.now()}`}
-          visible={!!currentNotification && !isModalAnimating}
+          key={currentNotification.id}
+          visible={isModalVisible}
           type={currentNotification.type}
-          serviceName={currentNotification.serviceName}
-          userName={currentNotification.userName}
-          workerName={currentNotification.workerName}
+          serviceName={
+            currentNotification.serviceName
+          }
+          userName={
+            currentNotification.userName
+          }
+          workerName={
+            currentNotification.workerName
+          }
           onClose={handleModalClose}
         />
-      ) : null}
+      )}
+
     </BookingNotificationContext.Provider>
   );
 };
