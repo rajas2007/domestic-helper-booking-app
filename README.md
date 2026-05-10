@@ -63,45 +63,148 @@ Built with a focus on real-world UX, smooth booking flow, and modern mobile desi
 ## 📸 App Screenshots
 
 ### 🏠 Home & Explore
-<p align="center">
-  <img src="./screenshots/home.jpeg" width="220"/>
-  <img src="./screenshots/explore.jpg" width="220"/>
-  
-</p>
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center">
+<img src="./screenshots/home.jpeg" width="220"/>
+<br/>
+<b>Home</b>
+</td>
+
+<td width="30"></td>
+
+<td align="center">
+<img src="./screenshots/explore.jpg" width="220"/>
+<br/>
+<b>Explore</b>
+</td>
+</tr>
+</table>
+
+</div>
 
 ---
 
 ### 🔐 Authentication
-<p align="center">
-  <img src="./screenshots/login.jpeg" width="220"/>
-  <img src="./screenshots/register.jpg" width="220"/>
-</p>
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center">
+<img src="./screenshots/login.jpeg" width="220"/>
+<br/>
+<b>Login</b>
+</td>
+
+<td width="30"></td>
+
+<td align="center">
+<img src="./screenshots/register.jpg" width="220"/>
+<br/>
+<b>Register</b>
+</td>
+</tr>
+</table>
+
+</div>
 
 ---
 
 ### 📦 Booking System
-<p align="center">
-  <img src="./screenshots/booked-state.jpg" width="220"/>
-  <img src="./screenshots/bookings.jpg" width="220"/>
-  <img src="./screenshots/accepted-status.jpg" width="220"/>
-</p>
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center">
+<img src="./screenshots/booked-state.jpg" width="220"/>
+<br/>
+<b>Booked State</b>
+</td>
+
+<td width="25"></td>
+
+<td align="center">
+<img src="./screenshots/bookings.jpg" width="220"/>
+<br/>
+<b>Bookings</b>
+</td>
+
+<td width="25"></td>
+
+<td align="center">
+<img src="./screenshots/accepted-status.jpg" width="220"/>
+<br/>
+<b>Accepted Status</b>
+</td>
+</tr>
+</table>
+
+</div>
 
 ---
 
 ### 👷 Worker Dashboard
-<p align="center">
-  <img src="./screenshots/worker.jpg" width="220"/>
-  <img src="./screenshots/accept-reject.jpg" width="220"/>
-</p>
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center">
+<img src="./screenshots/worker.jpg" width="220"/>
+<br/>
+<b>Worker Panel</b>
+</td>
+
+<td width="30"></td>
+
+<td align="center">
+<img src="./screenshots/accept-reject.jpg" width="220"/>
+<br/>
+<b>Accept / Reject</b>
+</td>
+</tr>
+</table>
+
+</div>
 
 ---
 
 ### ⚙️ Profile & Navigation
-<p align="center">
-  <img src="./screenshots/profile.jpg" width="220"/>
-  <img src="./screenshots/settings.jpg" width="220"/>
-  <img src="./screenshots/drawer.jpg" width="220"/>
-</p>
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center">
+<img src="./screenshots/profile.jpg" width="220"/>
+<br/>
+<b>Profile</b>
+</td>
+
+<td width="25"></td>
+
+<td align="center">
+<img src="./screenshots/settings.jpg" width="220"/>
+<br/>
+<b>Settings</b>
+</td>
+
+<td width="25"></td>
+
+<td align="center">
+<img src="./screenshots/drawer.jpg" width="220"/>
+<br/>
+<b>Drawer</b>
+</td>
+</tr>
+</table>
+
+</div>
 
 ---
 
@@ -144,7 +247,6 @@ Built with a focus on real-world UX, smooth booking flow, and modern mobile desi
 ---
 
 ## 🧩 Project Structure
-
 
 <pre>
 mobile-app/
@@ -268,7 +370,7 @@ eas build -p android --profile preview
 
 <p>
 <b>Rajas Ghongade</b><br/>
-Aspiring Full-Stack Developer | React Native Enthusiast<br/>
+Software Developer | React Native Enthusiast<br/>
 Focused on building scalable, user-centric applications with clean UI and real-world functionality.
 </p>
 
